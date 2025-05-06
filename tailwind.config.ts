@@ -9,16 +9,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#1A1A1A',
-        secondary: '#6C63FF',
-        success: '#34D399',
-        error: '#F87171',
-        neutral: {
-          100: '#FAFAFA',
-          200: '#E5E5E5',
-        },
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        card: "var(--card)",
+        "card-foreground": "var(--card-foreground)",
+        primary: "var(--primary)",
+        "primary-foreground": "var(--primary-foreground)",
+        secondary: "var(--secondary)",
+        "secondary-foreground": "var(--secondary-foreground)",
+        muted: "var(--muted)",
+        "muted-foreground": "var(--muted-foreground)",
+        accent: "var(--accent)",
+        "accent-foreground": "var(--accent-foreground)",
+        destructive: "var(--destructive)",
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
       },
-    },
+    },    
   },
   plugins: [],
 }

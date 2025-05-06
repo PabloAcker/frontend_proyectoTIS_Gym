@@ -35,7 +35,7 @@ export default function MembershipsPage() {
 
   return (
     <main className="p-6 bg-background text-foreground min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Membresías Disponibles</h1>
+      <h1 className="text-3xl font-bold mb-6">Planes de Membresías</h1>
 
       {loading && <p className="text-muted-foreground">Cargando...</p>}
       {error && <p className="text-red-500">{error}</p>}
