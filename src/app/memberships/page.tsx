@@ -1,4 +1,3 @@
-// src/app/memberships/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,7 +14,7 @@ interface Membership {
 
 export default function MembershipsPage() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoadingMemberships, setIsLoadingMemberships] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -27,9 +26,10 @@ export default function MembershipsPage() {
         console.error(err);
         setError("Error al cargar membresías.");
       } finally {
-        setLoading(false);
+        setIsLoadingMemberships(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -37,7 +37,9 @@ export default function MembershipsPage() {
     <main className="p-6 bg-background text-foreground min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Planes de Membresías</h1>
 
-      {loading && <p className="text-muted-foreground">Cargando...</p>}
+      {isLoadingMemberships && (
+        <p className="text-muted-foreground">Cargando...</p>
+      )}
       {error && <p className="text-red-500">{error}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

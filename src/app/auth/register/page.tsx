@@ -1,0 +1,110 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({
+    name: "",
+    lastname: "",
+    email: "",
+    password: "",
+    role: "cliente",
+  });
+  const [error, setError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al registrar");
+
+      // Mostrar modal de éxito
+      setShowSuccess(true);
+
+      // Esperar 2.5 segundos y redirigir
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 2500);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error al registrar");
+      }
+    }
+  };
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="bg-card p-6 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4 text-center">Crea tu cuenta</h2>
+        <Input
+          name="name"
+          placeholder="Nombre"
+          value={form.name}
+          onChange={handleChange}
+          className="mb-3"
+        />
+        <Input
+          name="lastname"
+          placeholder="Apellido"
+          value={form.lastname}
+          onChange={handleChange}
+          className="mb-3"
+        />
+        <Input
+          name="email"
+          placeholder="Correo electrónico"
+          value={form.email}
+          onChange={handleChange}
+          className="mb-3"
+        />
+        <Input
+          name="password"
+          type="password"
+          placeholder="Contraseña"
+          value={form.password}
+          onChange={handleChange}
+          className="mb-3"
+        />
+        <Button className="w-full" onClick={handleSubmit}>
+          Registrarme
+        </Button>
+        {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+      </div>
+
+      {/* Modal de éxito */}
+      <Dialog open={showSuccess} onOpenChange={() => {}}>
+        <DialogContent className="text-center">
+          <DialogHeader>
+            <DialogTitle>Cuenta creada exitosamente</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground mt-2">
+            Redirigiendo al inicio de sesión...
+          </p>
+        </DialogContent>
+      </Dialog>
+    </main>
+  );
+}
