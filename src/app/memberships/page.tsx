@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getMemberships } from "@/lib/api";
 import { MembershipCard } from "@/components/MembershipCard";
+import { ClientSidebar } from "@/components/ClientSidebar";
 
 interface Membership {
   id: number;
@@ -34,19 +35,27 @@ export default function MembershipsPage() {
   }, []);
 
   return (
-    <main className="p-6 bg-background text-foreground min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Planes de Membresías</h1>
-
-      {isLoadingMemberships && (
-        <p className="text-muted-foreground">Cargando...</p>
-      )}
-      {error && <p className="text-red-500">{error}</p>}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {memberships.map((m) => (
-          <MembershipCard key={m.id} membership={m} />
-        ))}
+    <div className="flex min-h-screen bg-background text-foreground">
+      {/* Sidebar */}
+      <div className="w-64 border-r hidden md:block">
+        <ClientSidebar />
       </div>
-    </main>
+
+      {/* Contenido principal */}
+      <main className="flex-1 p-6">
+        <h1 className="text-3xl font-bold mb-6">Planes de Membresías</h1>
+
+        {isLoadingMemberships && (
+          <p className="text-muted-foreground">Cargando...</p>
+        )}
+        {error && <p className="text-red-500">{error}</p>}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {memberships.map((m) => (
+            <MembershipCard key={m.id} membership={m} />
+          ))}
+        </div>
+      </main>
+    </div>
   );
 }
