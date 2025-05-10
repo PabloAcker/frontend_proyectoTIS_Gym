@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 interface Client {
@@ -19,7 +25,7 @@ interface Props {
   client: Client | null;
   open: boolean;
   onClose: () => void;
-  onSave: () => void; // Se usa para refrescar desde el padre
+  onSave: () => void;
 }
 
 export function ClientEditModal({ client, open, onClose, onSave }: Props) {
@@ -48,34 +54,75 @@ export function ClientEditModal({ client, open, onClose, onSave }: Props) {
       if (!res.ok) throw new Error("Error al guardar los cambios");
 
       toast.success("Cambios guardados correctamente");
-
-      onSave(); // 🔄 Refresca desde el padre
+      onSave();
       onClose();
     } catch (err) {
       console.error("Error al actualizar:", err);
-      toast.success("Cambios guardados correctamente");
+      toast.error("Error al guardar");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients/${client.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Error al eliminar");
+
+      toast.success("Cliente eliminado correctamente");
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error("Error al eliminar:", err);
+      toast.error("Error al eliminar cliente");
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Editar Cliente</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Input name="name" value={form.name} onChange={handleChange} placeholder="Nombre" />
-          <Input name="lastname" value={form.lastname} onChange={handleChange} placeholder="Apellido" />
-          <Input name="email" value={form.email} onChange={handleChange} placeholder="Correo" />
-          <Input name="ci" value={form.ci} onChange={handleChange} placeholder="Carnet" />
-          <Input name="birthdate" type="date" value={form.birthdate.slice(0, 10)} onChange={handleChange} />
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Guardando..." : "Guardar cambios"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input name="name" value={form.name} onChange={handleChange} placeholder="Nombre" />
+            <Input name="lastname" value={form.lastname} onChange={handleChange} placeholder="Apellido" />
+            <Input name="email" value={form.email} onChange={handleChange} placeholder="Correo" />
+            <Input name="ci" value={form.ci} onChange={handleChange} placeholder="Carnet" />
+            <Input name="birthdate" type="date" value={form.birthdate.slice(0, 10)} onChange={handleChange} />
+
+            <div className="flex justify-between gap-2">
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? "Guardando..." : "Guardar cambios"}
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">Eliminar Cliente</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      ¿Estás seguro de eliminar este cliente?
+                    </AlertDialogTitle>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>
+                      Sí, eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

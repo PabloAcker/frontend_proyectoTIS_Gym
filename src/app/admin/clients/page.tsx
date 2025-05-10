@@ -1,3 +1,4 @@
+/* src/app/admin/clients/page.tsx */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, BadgeInfo, Home, Layers } from "lucide-react";
+import { Pencil, BadgeInfo, Home, Layers, Plus } from "lucide-react";
 import { ClientEditModal } from "@/components/ClientEditModal";
+import { ClientCreateModal } from "@/components/ClientCreateModal";
 
 interface Client {
   id: number;
@@ -23,7 +25,8 @@ export default function AdminClientsPage() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const router = useRouter();
 
   const fetchClients = async () => {
@@ -70,6 +73,10 @@ export default function AdminClientsPage() {
             <Layers className="mr-2 w-4 h-4" />
             Membresías
           </Button>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="mr-2 w-4 h-4" />
+            Crear Cliente
+          </Button>
         </div>
       </div>
 
@@ -110,7 +117,7 @@ export default function AdminClientsPage() {
                     variant="ghost"
                     onClick={() => {
                       setSelectedClient(c);
-                      setIsModalOpen(true);
+                      setIsEditModalOpen(true);
                     }}
                   >
                     <Pencil className="w-4 h-4" />
@@ -131,15 +138,23 @@ export default function AdminClientsPage() {
         </table>
       </div>
 
-      {/* MODAL DE EDICIÓN */}
       <ClientEditModal
         client={selectedClient}
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
         onSave={async () => {
           await fetchClients();
           setSelectedClient(null);
-          setIsModalOpen(false);
+          setIsEditModalOpen(false);
+        }}
+      />
+
+      <ClientCreateModal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={async () => {
+          await fetchClients();
+          setIsCreateModalOpen(false);
         }}
       />
     </main>
