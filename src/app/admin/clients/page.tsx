@@ -1,4 +1,3 @@
-/* src/app/admin/clients/page.tsx */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Pencil, BadgeInfo, Home, Layers, Plus } from "lucide-react";
 import { ClientEditModal } from "@/components/ClientEditModal";
 import { ClientCreateModal } from "@/components/ClientCreateModal";
+import { ClientSubscriptionModal } from "@/components/ClientSubscriptionModal";
 
 interface Client {
   id: number;
@@ -27,6 +27,8 @@ export default function AdminClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const router = useRouter();
 
   const fetchClients = async () => {
@@ -100,7 +102,7 @@ export default function AdminClientsPage() {
               <th className="p-2 border">Nacimiento</th>
               <th className="p-2 border">Correo</th>
               <th className="p-2 border">Editar</th>
-              <th className="p-2 border">Membresía</th>
+              <th className="p-2 border">Estado de Suscripción</th>
             </tr>
           </thead>
           <tbody>
@@ -127,7 +129,10 @@ export default function AdminClientsPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => router.push(`/admin/clients/${c.id}/membership`)}
+                    onClick={() => {
+                      setSelectedUserId(c.id);
+                      setIsSubscriptionModalOpen(true);
+                    }}
                   >
                     <BadgeInfo className="w-4 h-4" />
                   </Button>
@@ -157,6 +162,17 @@ export default function AdminClientsPage() {
           setIsCreateModalOpen(false);
         }}
       />
+
+      {selectedUserId !== null && (
+        <ClientSubscriptionModal
+          userId={selectedUserId}
+          open={isSubscriptionModalOpen}
+          onClose={() => {
+            setSelectedUserId(null);
+            setIsSubscriptionModalOpen(false);
+          }}
+        />
+      )}
     </main>
   );
 }

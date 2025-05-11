@@ -26,18 +26,23 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
+      // 👇 Redirección según el rol
       if (data.user.role === "admin") {
         router.push("/admin");
+      } else if (data.user.role === "empleado") {
+        router.push("/admin"); 
+      } else if (data.user.role === "cliente") {
+        router.push("/client");
       } else {
-        router.push("/memberships");
+        router.push("/");
       }
     } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Error al iniciar sesión");
-        }
-    } 
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error al iniciar sesión");
+      }
+    }
   };
 
   return (

@@ -28,12 +28,12 @@ export function QrUploadModal({ open, onClose }: Props) {
     const fetchQr = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qrs`);
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setQrImage(data[0].image || null); // toma el primero o el más reciente
-        } else {
+        if (!res.ok) {
           setQrImage(null);
+          return;
         }
+        const data = await res.json();
+        setQrImage(data.image || null);
       } catch (error) {
         console.log("No hay QR aún cargado", error);
         setQrImage(null);

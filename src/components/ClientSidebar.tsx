@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Layers, ClipboardList } from "lucide-react";
+import { Layers, ClipboardList, Home } from "lucide-react";
 
 export function ClientSidebar() {
   const router = useRouter();
@@ -13,6 +13,14 @@ export function ClientSidebar() {
   return (
     <div className="w-full sm:w-64 p-4 bg-muted rounded-md mb-6 sm:mb-0">
       <nav className="flex flex-col gap-2">
+        <Button
+          variant={isActive("/client") ? "default" : "ghost"}
+          onClick={() => router.push("/client")}
+          className="justify-start"
+        >
+          <Home className="w-4 h-4 mr-2" />
+          Inicio
+        </Button>
         <Button
           variant={isActive("/memberships") ? "default" : "ghost"}
           onClick={() => router.push("/memberships")}
@@ -27,7 +35,7 @@ export function ClientSidebar() {
           className="justify-start"
         >
           <ClipboardList className="w-4 h-4 mr-2" />
-          Estado de membresía
+          Estado de suscripción
         </Button>
       </nav>
     </div>
