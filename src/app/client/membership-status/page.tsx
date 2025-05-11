@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -25,9 +27,14 @@ interface Subscription {
 
 export default function MembershipStatusPage() {
   const { loading, user } = useAuth("cliente");
+  const router = useRouter();
+
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Membership | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [qrImage, setQrImage] = useState<string | null>(null);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [proofSent, setProofSent] = useState(false);
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -44,8 +51,6 @@ export default function MembershipStatusPage() {
     const fetchQr = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qrs`);
-        if (!res.ok) throw new Error("QR no encontrado");
-
         const data = await res.json();
         setQrImage(data.image || null);
       } catch (error) {
@@ -54,30 +59,48 @@ export default function MembershipStatusPage() {
       }
     };
 
+    const fetchSelectedPlan = () => {
+      try {
+        const stored = localStorage.getItem("selectedMembership");
+        if (stored) {
+          const parsed: Membership = JSON.parse(stored);
+          setSelectedPlan(parsed);
+        }
+      } catch (error) {
+        console.error("Error al leer plan seleccionado:", error);
+      }
+    };
+
     if (user) {
       fetchSubscription();
       fetchQr();
+      fetchSelectedPlan();
     }
   }, [user]);
 
   const handleUpload = async () => {
-    if (!proofFile || !subscription) return;
+    if (!proofFile || !selectedPlan) return;
 
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64 = reader.result as string;
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/proof/${subscription.id}`, {
-          method: "PUT",
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions`, {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ proofFile: base64 }),
+          body: JSON.stringify({
+            userId: user?.id,
+            membershipId: selectedPlan.id,
+            proofFile: base64,
+          }),
         });
 
-        if (!res.ok) throw new Error("Error al subir comprobante");
+        if (!res.ok) throw new Error("Error al enviar suscripción");
 
-        toast.success("Comprobante enviado correctamente");
+        toast.success("Comprobante enviado correctamente. Estado en espera de aprobación.");
         setProofFile(null);
+        setProofSent(true);
       } catch (error) {
         console.error("Error al enviar comprobante:", error);
         toast.error("Error al enviar el comprobante");
@@ -85,6 +108,14 @@ export default function MembershipStatusPage() {
     };
 
     reader.readAsDataURL(proofFile);
+  };
+
+  const confirmCancelSelection = () => {
+    localStorage.removeItem("selectedMembership");
+    setSelectedPlan(null);
+    setProofFile(null);
+    toast.success("Redirigiendo a la página principal...");
+    setTimeout(() => router.push("/client"), 1500);
   };
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
@@ -98,38 +129,67 @@ export default function MembershipStatusPage() {
 
         {!subscription ? (
           <div className="text-muted-foreground">
-            <p className="mb-4">No tienes ninguna suscripción activa.</p>
+            {selectedPlan ? (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-semibold text-lg text-foreground">
+                    Estás a punto de unirte al plan{" "}
+                    <span className="text-primary">{selectedPlan.name}</span>
+                  </h2>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmCancelOpen(true)}
+                    disabled={proofSent}
+                  >
+                    Cancelar selección
+                  </Button>
+                </div>
 
-            {qrImage && (
-              <div className="mb-4">
-                <h2 className="font-semibold mb-2">Realiza tu pago escaneando este QR:</h2>
-                <Image
-                  src={qrImage}
-                  alt="Código QR de pago"
-                  width={256}
-                  height={256}
-                  className="rounded-md"
-                />
-              </div>
+                {qrImage && (
+                  <div className="mb-6">
+                    <p className="text-muted-foreground mb-2">Realiza tu pago escaneando este QR:</p>
+                    <Image
+                      src={qrImage}
+                      alt="Código QR de pago"
+                      width={256}
+                      height={256}
+                      className="rounded-md"
+                    />
+                  </div>
+                )}
+
+                {proofSent ? (
+                  <div className="bg-green-100 border border-green-300 p-4 rounded-md text-green-800">
+                    <p>Tu comprobante fue enviado. Espera a que un empleado lo apruebe para activar tu suscripción.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-1">Sube tu comprobante de pago:</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                      />
+                    </div>
+
+                    <Button onClick={handleUpload} disabled={!proofFile}>
+                      Enviar comprobante
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className="text-muted-foreground">No tienes ninguna suscripción ni plan seleccionado.</p>
             )}
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">Sube tu comprobante de pago:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-              />
-            </div>
-
-            <Button onClick={handleUpload} disabled={!proofFile}>
-              Enviar comprobante
-            </Button>
           </div>
         ) : (
           <div className="space-y-4">
             <div>
-              <p className="text-muted-foreground">Estado: <strong>{subscription.state}</strong></p>
+              <p className="text-muted-foreground">
+                Estado: <strong>{subscription.state}</strong>
+              </p>
               <p>Inicio: {new Date(subscription.start_date).toLocaleDateString()}</p>
               <p>Fin: {new Date(subscription.end_date).toLocaleDateString()}</p>
             </div>
@@ -142,6 +202,26 @@ export default function MembershipStatusPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de confirmación */}
+      <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>¿Cancelar selección de plan?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">
+            Se eliminará el plan seleccionado y volverás al inicio.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setConfirmCancelOpen(false)}>
+              No
+            </Button>
+            <Button variant="destructive" onClick={confirmCancelSelection}>
+              Sí, cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
