@@ -21,6 +21,9 @@ export default function AdminPage() {
         <Button onClick={() => router.push("/admin/clients")}>
           Gestionar Clientes
         </Button>
+        <Button onClick={() => router.push("/admin/employees")}>
+          Gestionar Empleados
+        </Button>
         <Button onClick={() => router.push("/admin/memberships")}>
           Gestionar Membresías
         </Button>

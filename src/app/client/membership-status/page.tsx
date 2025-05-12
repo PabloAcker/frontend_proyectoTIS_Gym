@@ -42,6 +42,10 @@ export default function MembershipStatusPage() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user?.id}`);
         const data = await res.json();
         setSubscription(data || null);
+        if (data?.state === "aprobado") {
+          localStorage.removeItem("selectedMembership");
+          setSelectedPlan(null);
+        }
       } catch (error) {
         console.error("Error al cargar suscripción:", error);
         setSubscription(null);
