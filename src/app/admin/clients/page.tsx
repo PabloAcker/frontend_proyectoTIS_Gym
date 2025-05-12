@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, BadgeInfo, Home, Layers, Plus } from "lucide-react";
+import { Pencil, BadgeInfo, Home, Layers, Plus, ReceiptText } from "lucide-react";
 import { ClientEditModal } from "@/components/ClientEditModal";
 import { ClientCreateModal } from "@/components/ClientCreateModal";
 import { ClientSubscriptionModal } from "@/components/ClientSubscriptionModal";
 
 interface Client {
   id: number;
+  user_id: number;
   ci: string;
   name: string;
   lastname: string;
@@ -20,7 +21,7 @@ interface Client {
 }
 
 export default function AdminClientsPage() {
-  const { loading } = useAuth("admin");
+  const { loading } = useAuth(["admin"]);
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -74,6 +75,10 @@ export default function AdminClientsPage() {
           <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
             <Layers className="mr-2 w-4 h-4" />
             Membresías
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/admin/subscriptions")}>
+            <ReceiptText className="mr-2 w-4 h-4" />
+            Suscripciones
           </Button>
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="mr-2 w-4 h-4" />
@@ -130,7 +135,7 @@ export default function AdminClientsPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      setSelectedUserId(c.id);
+                      setSelectedUserId(c.user_id);
                       setIsSubscriptionModalOpen(true);
                     }}
                   >

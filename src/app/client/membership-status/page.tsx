@@ -26,7 +26,7 @@ interface Subscription {
 }
 
 export default function MembershipStatusPage() {
-  const { loading, user } = useAuth("cliente");
+  const { loading, user } = useAuth(["cliente"]);
   const router = useRouter();
 
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -101,6 +101,13 @@ export default function MembershipStatusPage() {
         toast.success("Comprobante enviado correctamente. Estado en espera de aprobación.");
         setProofFile(null);
         setProofSent(true);
+        localStorage.removeItem("selectedMembership");
+        setSelectedPlan(null);
+
+        // REFRESCAR ESTADO DESPUÉS DE CREAR LA SUSCRIPCIÓN
+        const refresh = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user?.id}`);
+        const newSub = await refresh.json();
+        setSubscription(newSub || null);
       } catch (error) {
         console.error("Error al enviar comprobante:", error);
         toast.error("Error al enviar el comprobante");

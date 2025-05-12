@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, loading } = useAuth("admin");
+  const { user, loading } = useAuth(["admin"]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
 
@@ -23,6 +23,9 @@ export default function AdminPage() {
         </Button>
         <Button onClick={() => router.push("/admin/memberships")}>
           Gestionar Membresías
+        </Button>
+        <Button onClick={() => router.push("/admin/subscriptions")}>
+          Gestionar Suscripciones
         </Button>
       </div>
     </main>

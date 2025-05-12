@@ -18,7 +18,8 @@ export default function RegisterPage() {
     lastname: "",
     email: "",
     password: "",
-    role: "cliente",
+    ci: "",
+    birthdate: "",
   });
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -30,7 +31,7 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -39,10 +40,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al registrar");
 
-      // Mostrar modal de éxito
       setShowSuccess(true);
-
-      // Esperar 2.5 segundos y redirigir
       setTimeout(() => {
         router.push("/auth/login");
       }, 2500);
@@ -74,6 +72,21 @@ export default function RegisterPage() {
           className="mb-3"
         />
         <Input
+          name="ci"
+          placeholder="CI"
+          value={form.ci}
+          onChange={handleChange}
+          className="mb-3"
+        />
+        <Input
+          name="birthdate"
+          type="date"
+          placeholder="Fecha de nacimiento"
+          value={form.birthdate}
+          onChange={handleChange}
+          className="mb-3"
+        />
+        <Input
           name="email"
           placeholder="Correo electrónico"
           value={form.email}
@@ -94,7 +107,6 @@ export default function RegisterPage() {
         {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
       </div>
 
-      {/* Modal de éxito */}
       <Dialog open={showSuccess} onOpenChange={() => {}}>
         <DialogContent className="text-center">
           <DialogHeader>
