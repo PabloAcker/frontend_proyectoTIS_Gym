@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Layers, ClipboardList, Home } from "lucide-react";
+import { Layers, ClipboardList, Home, UserCog } from "lucide-react";
 
 export function ClientSidebar() {
   const router = useRouter();
@@ -36,6 +36,14 @@ export function ClientSidebar() {
         >
           <ClipboardList className="w-4 h-4 mr-2" />
           Estado de suscripción
+        </Button>
+        <Button
+          variant={isActive("/client/profile") ? "default" : "ghost"}
+          onClick={() => router.push("/client/profile")}
+          className="justify-start"
+        >
+          <UserCog className="w-4 h-4 mr-2" />
+          Perfil
         </Button>
       </nav>
     </div>
