@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, Home, Layers, Plus, ReceiptText } from "lucide-react";
+import { Pencil, Home, Layers, Plus, ReceiptText, Users } from "lucide-react";
 import { EmployeeEditModal } from "@/components/EmployeeEditModal";
 import { EmployeeCreateModal } from "@/components/EmployeeCreateModal";
 
@@ -63,6 +63,10 @@ export default function AdminEmployeesPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push("/admin")}>
             <Home className="mr-2 w-4 h-4" /> Panel
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/admin/clients")}>
+            <Users className="mr-2 w-4 h-4" />
+            Clientes
           </Button>
           <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
             <Layers className="mr-2 w-4 h-4" /> Membresías

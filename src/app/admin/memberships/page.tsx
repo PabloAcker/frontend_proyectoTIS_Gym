@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, QrCode, Plus, Home, Users, ReceiptText } from "lucide-react";
+import { Pencil, QrCode, Plus, Home, Users, ReceiptText, ShieldUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getMemberships } from "@/lib/api";
 import { Membership } from "@/interfaces/Membership";
@@ -13,7 +13,7 @@ import { MembershipCreateModal } from "@/components/MembershipCreateModal";
 import { QrUploadModal } from "@/components/QrUploadModal";
 
 export default function AdminMembershipsPage() {
-  const { loading } = useAuth(["admin"]);
+  const { user, loading } = useAuth(["admin", "empleado"]);
   const router = useRouter();
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [filteredMemberships, setFilteredMemberships] = useState<Membership[]>([]);
@@ -65,6 +65,12 @@ export default function AdminMembershipsPage() {
             <Users className="mr-2 w-4 h-4" />
             Clientes
           </Button>
+          {user?.role === "admin" && (
+          <Button variant="outline" onClick={() => router.push("/admin/employees")}>
+            <ShieldUser className="mr-2 w-4 h-4" />
+            Empleados
+          </Button>
+          )}
           <Button variant="outline" onClick={() => router.push("/admin/subscriptions")}>
             <ReceiptText className="mr-2 w-4 h-4" />
             Suscripciones

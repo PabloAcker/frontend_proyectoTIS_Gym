@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Home, Users, Layers, Check, X,
+  ShieldUser,
 } from "lucide-react";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ interface Subscription {
 }
 
 export default function AdminSubscriptionsPage() {
-  const { loading, unauthorized } = useAuth(["admin", "empleado"]);
+  const { user, loading, unauthorized } = useAuth(["admin", "empleado"]);
   const router = useRouter();
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -119,6 +120,12 @@ export default function AdminSubscriptionsPage() {
           <Button variant="outline" onClick={() => router.push("/admin/clients")}>
             <Users className="mr-2 w-4 h-4" /> Clientes
           </Button>
+          {user?.role === "admin" && (
+          <Button variant="outline" onClick={() => router.push("/admin/employees")}>
+            <ShieldUser className="mr-2 w-4 h-4" />
+            Empleados
+          </Button>
+          )}
           <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
             <Layers className="mr-2 w-4 h-4" /> Membresías
           </Button>

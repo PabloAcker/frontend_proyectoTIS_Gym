@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, loading } = useAuth(["admin"]);
+  const { user, loading } = useAuth(["admin", "empleado"]); // Permitimos que ambos accedan
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
 
@@ -21,9 +21,14 @@ export default function AdminPage() {
         <Button onClick={() => router.push("/admin/clients")}>
           Gestionar Clientes
         </Button>
-        <Button onClick={() => router.push("/admin/employees")}>
-          Gestionar Empleados
-        </Button>
+
+        {/* Mostrar este botón solo si el usuario es admin */}
+        {user?.role === "admin" && (
+          <Button onClick={() => router.push("/admin/employees")}>
+            Gestionar Empleados
+          </Button>
+        )}
+
         <Button onClick={() => router.push("/admin/memberships")}>
           Gestionar Membresías
         </Button>

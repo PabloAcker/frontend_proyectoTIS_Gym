@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, BadgeInfo, Home, Layers, Plus, ReceiptText } from "lucide-react";
+import { Pencil, BadgeInfo, Home, Layers, Plus, ReceiptText, ShieldUser } from "lucide-react";
 import { ClientEditModal } from "@/components/ClientEditModal";
 import { ClientCreateModal } from "@/components/ClientCreateModal";
 import { ClientSubscriptionModal } from "@/components/ClientSubscriptionModal";
@@ -21,7 +21,7 @@ interface Client {
 }
 
 export default function AdminClientsPage() {
-  const { loading } = useAuth(["admin"]);
+  const { user, loading } = useAuth(["admin", "empleado"]);
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -72,6 +72,12 @@ export default function AdminClientsPage() {
             <Home className="mr-2 w-4 h-4" />
             Panel
           </Button>
+          {user?.role === "admin" && (
+          <Button variant="outline" onClick={() => router.push("/admin/employees")}>
+            <ShieldUser className="mr-2 w-4 h-4" />
+            Empleados
+          </Button>
+          )}
           <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
             <Layers className="mr-2 w-4 h-4" />
             Membresías
