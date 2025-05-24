@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { Layers, ReceiptText, ShieldUser, UserCog, Users } from "lucide-react";
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, loading } = useAuth(["admin", "empleado"]); // Permitimos que ambos accedan
+  const { user, loading } = useAuth(["admin", "empleado"]); 
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
 
@@ -19,21 +20,24 @@ export default function AdminPage() {
 
       <div className="flex flex-col sm:flex-row gap-4">
         <Button onClick={() => router.push("/admin/clients")}>
-          Gestionar Clientes
+          <Users className="mr-2 w-4 h-4" /> Gestionar Clientes
         </Button>
 
         {/* Mostrar este botón solo si el usuario es admin */}
         {user?.role === "admin" && (
           <Button onClick={() => router.push("/admin/employees")}>
-            Gestionar Empleados
+            <ShieldUser className="mr-2 w-4 h-4" /> Gestionar Empleados
           </Button>
         )}
 
         <Button onClick={() => router.push("/admin/memberships")}>
-          Gestionar Membresías
+          <Layers className="mr-2 w-4 h-4" /> Gestionar Membresías
         </Button>
         <Button onClick={() => router.push("/admin/subscriptions")}>
-          Gestionar Suscripciones
+          <ReceiptText className="mr-2 w-4 h-4" /> Gestionar Suscripciones
+        </Button>
+        <Button onClick={() => router.push("/admin/profile")}>
+          <UserCog className="mr-2 w-4 h-4" /> Perfil
         </Button>
       </div>
     </main>
