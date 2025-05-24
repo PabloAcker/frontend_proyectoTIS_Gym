@@ -37,9 +37,11 @@ export default function MembershipStatusPage() {
   const [proofSent, setProofSent] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchSubscription = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user?.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user.id}`);
         const data = await res.json();
         setSubscription(data || null);
         if (data?.state === "aprobado") {
@@ -75,10 +77,10 @@ export default function MembershipStatusPage() {
       }
     };
 
+    fetchSelectedPlan();
     if (user) {
       fetchSubscription();
       fetchQr();
-      fetchSelectedPlan();
     }
   }, [user]);
 
@@ -108,7 +110,6 @@ export default function MembershipStatusPage() {
         localStorage.removeItem("selectedMembership");
         setSelectedPlan(null);
 
-        // REFRESCAR ESTADO DESPUÉS DE CREAR LA SUSCRIPCIÓN
         const refresh = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user?.id}`);
         const newSub = await refresh.json();
         setSubscription(newSub || null);
@@ -130,6 +131,21 @@ export default function MembershipStatusPage() {
   };
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
+
+  if (!user) {
+    return (
+      <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
+        <ClientSidebar />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold mb-4">Estado de suscripción</h1>
+          <p className="text-muted-foreground">Crea una cuenta para ingresar a este apartado.</p>
+          <Button className="mt-4" onClick={() => router.push("/auth/register")}>
+            Crear cuenta
+          </Button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">

@@ -15,7 +15,7 @@ type EditableField = "name" | "lastname" | "email" | "ci" | "birthdate";
 
 export default function ClientProfilePage() {
   const router = useRouter();
-  const { user, loading, unauthorized } = useAuth(["cliente"]);
+  const { user, loading } = useAuth(["cliente"]);
 
   const [form, setForm] = useState<Record<EditableField, string>>({
     name: "",
@@ -48,7 +48,6 @@ export default function ClientProfilePage() {
           });
           setClientId(clientData.id);
         } else {
-          // Si no tiene cliente, usar /users
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`)
             .then(res => res.json())
             .then(data => {
@@ -112,14 +111,30 @@ export default function ClientProfilePage() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setLogoutDialog(true);
     setTimeout(() => {
       router.push("/");
     }, 2000);
   };
 
-  if (unauthorized) return <p className="p-6">No autorizado</p>;
-  if (loading || !user) return <p className="p-6">Cargando...</p>;
+  if (loading) return <p className="p-6">Cargando...</p>;
+
+  if (!user) {
+    return (
+      <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
+        <ClientSidebar />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold mb-4">Perfil</h1>
+          <p className="text-muted-foreground">Crea una cuenta para ingresar a este apartado.</p>
+          <Button className="mt-4" onClick={() => router.push("/auth/register")}>
+            Crear cuenta
+          </Button>
+        </div>
+      </main>
+    );
+  }
 
   const fields: { label: string; key: EditableField; type?: string }[] =
     clientId !== null
@@ -193,7 +208,6 @@ export default function ClientProfilePage() {
         </Button>
       </div>
 
-      {/* Modal de éxito */}
       <Dialog open={showSuccess} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
@@ -202,7 +216,6 @@ export default function ClientProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de cierre de sesión */}
       <Dialog open={logoutDialog} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
