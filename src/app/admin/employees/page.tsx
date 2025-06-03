@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, Home, Layers, Plus, ReceiptText, Users } from "lucide-react";
+import { Pencil, Plus} from "lucide-react";
 import { EmployeeEditModal } from "@/components/EmployeeEditModal";
 import { EmployeeCreateModal } from "@/components/EmployeeCreateModal";
+import { AdminTopNav } from "@/components/AdminTopNav";
 
 interface Employee {
   id: number;
@@ -25,7 +25,6 @@ export default function AdminEmployeesPage() {
   const [selected, setSelected] = useState<Employee | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const router = useRouter();
 
   const fetchEmployees = async () => {
     try {
@@ -61,19 +60,7 @@ export default function AdminEmployeesPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Empleados</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/admin")}>
-            <Home className="mr-2 w-4 h-4" /> Panel
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/clients")}>
-            <Users className="mr-2 w-4 h-4" />
-            Clientes
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
-            <Layers className="mr-2 w-4 h-4" /> Membresías
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/subscriptions")}>
-            <ReceiptText className="mr-2 w-4 h-4" /> Suscripciones
-          </Button>
+          <AdminTopNav />
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="mr-2 w-4 h-4" />
             Añadir Empleado

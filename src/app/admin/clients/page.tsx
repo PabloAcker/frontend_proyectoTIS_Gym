@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, BadgeInfo, Home, Layers, Plus, ReceiptText, ShieldUser } from "lucide-react";
+import { Pencil, BadgeInfo, Plus } from "lucide-react";
 import { ClientEditModal } from "@/components/ClientEditModal";
 import { ClientCreateModal } from "@/components/ClientCreateModal";
 import { ClientSubscriptionModal } from "@/components/ClientSubscriptionModal";
+import { AdminTopNav } from "@/components/AdminTopNav";
 
 interface Client {
   id: number;
@@ -21,7 +21,7 @@ interface Client {
 }
 
 export default function AdminClientsPage() {
-  const { user, loading } = useAuth(["admin", "empleado"]);
+  const {loading } = useAuth(["admin", "empleado"]);
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -30,7 +30,6 @@ export default function AdminClientsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-  const router = useRouter();
 
   const fetchClients = async () => {
     try {
@@ -68,24 +67,7 @@ export default function AdminClientsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Clientes</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/admin")}>
-            <Home className="mr-2 w-4 h-4" />
-            Panel
-          </Button>
-          {user?.role === "admin" && (
-          <Button variant="outline" onClick={() => router.push("/admin/employees")}>
-            <ShieldUser className="mr-2 w-4 h-4" />
-            Empleados
-          </Button>
-          )}
-          <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
-            <Layers className="mr-2 w-4 h-4" />
-            Membresías
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/subscriptions")}>
-            <ReceiptText className="mr-2 w-4 h-4" />
-            Suscripciones
-          </Button>
+          <AdminTopNav />
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="mr-2 w-4 h-4" />
             Crear Cliente

@@ -4,17 +4,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, QrCode, Plus, Home, Users, ReceiptText, ShieldUser } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Pencil, QrCode, Plus } from "lucide-react";
 import { getMemberships } from "@/lib/api";
 import { Membership } from "@/interfaces/Membership";
 import { MembershipEditModal } from "@/components/MembershipEditModal";
 import { MembershipCreateModal } from "@/components/MembershipCreateModal";
 import { QrUploadModal } from "@/components/QrUploadModal";
+import { AdminTopNav } from "@/components/AdminTopNav";
 
 export default function AdminMembershipsPage() {
-  const { user, loading } = useAuth(["admin", "empleado"]);
-  const router = useRouter();
+  const { loading } = useAuth(["admin", "empleado"]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [filteredMemberships, setFilteredMemberships] = useState<Membership[]>([]);
   const [search, setSearch] = useState("");
@@ -57,24 +56,7 @@ export default function AdminMembershipsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Membresías</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/admin")}>
-            <Home className="mr-2 w-4 h-4" />
-            Panel
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/clients")}>
-            <Users className="mr-2 w-4 h-4" />
-            Clientes
-          </Button>
-          {user?.role === "admin" && (
-          <Button variant="outline" onClick={() => router.push("/admin/employees")}>
-            <ShieldUser className="mr-2 w-4 h-4" />
-            Empleados
-          </Button>
-          )}
-          <Button variant="outline" onClick={() => router.push("/admin/subscriptions")}>
-            <ReceiptText className="mr-2 w-4 h-4" />
-            Suscripciones
-          </Button>
+          <AdminTopNav />
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="mr-2 w-4 h-4" />
             Agregar nueva

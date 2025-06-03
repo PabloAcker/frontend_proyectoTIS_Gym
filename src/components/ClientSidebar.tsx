@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Layers, ClipboardList, Home, UserCog, MapPin } from "lucide-react";
+import { Layers, ClipboardList, Home, UserCog, MapPin, Sparkles } from "lucide-react";
 
 export function ClientSidebar() {
   const router = useRouter();
@@ -38,6 +38,15 @@ export function ClientSidebar() {
         >
           <MapPin className="w-4 h-4 mr-2" />
           Sucursales
+        </Button>
+
+        <Button
+          variant={isActive("/client/chatbot") ? "default" : "ghost"}
+          onClick={() => router.push("/client/chatbot")}
+          className="justify-start"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Dietas y rutinas
         </Button>
 
         <Button

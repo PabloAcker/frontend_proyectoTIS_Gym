@@ -1,14 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Home, Users, Layers, Check, X,
-  ShieldUser,
-} from "lucide-react";
+import { Check, X,} from "lucide-react";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import { toast } from "sonner";
 import {
@@ -20,6 +16,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { AdminTopNav } from "@/components/AdminTopNav";
 
 interface Subscription {
   id: number;
@@ -43,8 +40,7 @@ interface Subscription {
 }
 
 export default function AdminSubscriptionsPage() {
-  const { user, loading, unauthorized } = useAuth(["admin", "empleado"]);
-  const router = useRouter();
+  const { loading, unauthorized } = useAuth(["admin", "empleado"]);
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [filtered, setFiltered] = useState<Subscription[]>([]);
@@ -114,21 +110,7 @@ export default function AdminSubscriptionsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Suscripciones</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/admin")}>
-            <Home className="mr-2 w-4 h-4" /> Panel
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/clients")}>
-            <Users className="mr-2 w-4 h-4" /> Clientes
-          </Button>
-          {user?.role === "admin" && (
-          <Button variant="outline" onClick={() => router.push("/admin/employees")}>
-            <ShieldUser className="mr-2 w-4 h-4" />
-            Empleados
-          </Button>
-          )}
-          <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
-            <Layers className="mr-2 w-4 h-4" /> Membresías
-          </Button>
+          <AdminTopNav />
         </div>
       </div>
 

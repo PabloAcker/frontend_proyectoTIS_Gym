@@ -11,17 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Home,
-  Users,
-  Layers,
-  ShieldUser,
-  Pencil,
-  X,
-  ReceiptText,
-} from "lucide-react";
+import { Pencil, X} from "lucide-react";
 import { toast } from "sonner";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
+import { AdminTopNav } from "@/components/AdminTopNav";
 
 type EditableField = "name" | "lastname" | "email";
 
@@ -115,27 +108,10 @@ export default function AdminProfilePage() {
 
   return (
     <main className="p-6 min-h-screen bg-background text-foreground">
-      {/* Menú superior */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Perfil</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/admin")}>
-            <Home className="mr-2 w-4 h-4" /> Panel
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/clients")}>
-            <Users className="mr-2 w-4 h-4" /> Clientes
-          </Button>
-          {user?.role === "admin" && (
-            <Button variant="outline" onClick={() => router.push("/admin/employees")}>
-              <ShieldUser className="mr-2 w-4 h-4" /> Empleados
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => router.push("/admin/memberships")}>
-            <Layers className="mr-2 w-4 h-4" /> Membresías
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/subscriptions")}>
-            <ReceiptText className="mr-2 w-4 h-4" /> Suscripciones
-          </Button>
+          <AdminTopNav />
         </div>
       </div>
 
