@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Layers, ClipboardList, Home, UserCog } from "lucide-react";
+import { Layers, ClipboardList, Home, UserCog, MapPin } from "lucide-react";
 
 export function ClientSidebar() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export function ClientSidebar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <div className="w-full sm:w-64 p-4 bg-muted rounded-md mb-6 sm:mb-0">
+    <aside className="w-full sm:w-64 p-4 bg-[#e2f1ef] rounded-md min-h-screen">
       <nav className="flex flex-col gap-2">
         <Button
           variant={isActive("/client") ? "default" : "ghost"}
@@ -21,6 +21,7 @@ export function ClientSidebar() {
           <Home className="w-4 h-4 mr-2" />
           Inicio
         </Button>
+
         <Button
           variant={isActive("/memberships") ? "default" : "ghost"}
           onClick={() => router.push("/memberships")}
@@ -29,6 +30,16 @@ export function ClientSidebar() {
           <Layers className="w-4 h-4 mr-2" />
           Planes de membresía
         </Button>
+
+        <Button
+          variant={isActive("/client/branches") ? "default" : "ghost"}
+          onClick={() => router.push("/client/branches")}
+          className="justify-start"
+        >
+          <MapPin className="w-4 h-4 mr-2" />
+          Sucursales
+        </Button>
+
         <Button
           variant={isActive("/client/membership-status") ? "default" : "ghost"}
           onClick={() => router.push("/client/membership-status")}
@@ -37,6 +48,7 @@ export function ClientSidebar() {
           <ClipboardList className="w-4 h-4 mr-2" />
           Estado de suscripción
         </Button>
+
         <Button
           variant={isActive("/client/profile") ? "default" : "ghost"}
           onClick={() => router.push("/client/profile")}
@@ -46,6 +58,6 @@ export function ClientSidebar() {
           Perfil
         </Button>
       </nav>
-    </div>
+    </aside>
   );
 }
