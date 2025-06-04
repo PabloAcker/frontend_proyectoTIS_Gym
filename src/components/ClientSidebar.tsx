@@ -1,17 +1,43 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+import {
+  Layers,
+  ClipboardList,
+  Home,
+  UserCog,
+  MapPin,
+  Sparkles,
+  LogOut,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Layers, ClipboardList, Home, UserCog, MapPin, Sparkles } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 export function ClientSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [logoutDialog, setLogoutDialog] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
+  const confirmLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    router.push("/");
+  };
+
   return (
-    <aside className="w-full sm:w-64 p-4 bg-[#e2f1ef] rounded-md min-h-screen">
+    <aside className="w-full sm:w-64 p-4 bg-[#e2f1ef] rounded-md min-h-[90vh] flex flex-col justify-between">
+      {/* Navegación principal */}
       <nav className="flex flex-col gap-2">
         <Button
           variant={isActive("/client") ? "default" : "ghost"}
@@ -67,6 +93,33 @@ export function ClientSidebar() {
           Perfil
         </Button>
       </nav>
+
+      {/* Botón de cerrar sesión */}
+      <div className="mt-4 pt-4">
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={() => setLogoutDialog(true)}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Cerrar sesión
+        </Button>
+      </div>
+
+      {/* Modal de confirmación de logout */}
+      <AlertDialog open={logoutDialog} onOpenChange={setLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro de cerrar sesión?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLogout}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

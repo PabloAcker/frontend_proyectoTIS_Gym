@@ -6,27 +6,34 @@ import { useAuth } from "@/hooks/useAuth";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Pencil, X } from "lucide-react";
+import { Pencil, X, Eye, EyeOff } from "lucide-react";
 import { ClientProfile } from "@/interfaces/Client-profile";
 
-type EditableField = "name" | "lastname" | "email" | "ci" | "birthdate";
+type EditableField = "name" | "lastname" | "password";
 
 export default function ClientProfilePage() {
   const router = useRouter();
   const { user, loading } = useAuth(["cliente"]);
 
-  const [form, setForm] = useState<Record<EditableField, string>>({
+  const [form, setForm] = useState<Record<EditableField | "email", string>>({
     name: "",
     lastname: "",
     email: "",
-    ci: "",
-    birthdate: "",
+    password: "",
   });
 
   const [originalForm, setOriginalForm] = useState<typeof form | null>(null);
   const [editingField, setEditingField] = useState<EditableField | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState<EditableField | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [logoutDialog, setLogoutDialog] = useState(false);
   const [clientId, setClientId] = useState<number | null>(null);
@@ -43,8 +50,7 @@ export default function ClientProfilePage() {
             name: clientData.name,
             lastname: clientData.lastname,
             email: clientData.email,
-            ci: clientData.ci,
-            birthdate: clientData.birthdate?.slice(0, 10) || "",
+            password: "",
           });
           setClientId(clientData.id);
         } else {
@@ -56,8 +62,7 @@ export default function ClientProfilePage() {
                 name: data.name || "",
                 lastname: data.lastname || "",
                 email: data.email || "",
-                ci: "",
-                birthdate: "",
+                password: "",
               }));
             })
             .catch(() => toast.error("Error al cargar datos del usuario"));
@@ -85,6 +90,7 @@ export default function ClientProfilePage() {
 
       setEditingField(null);
       setOriginalForm(null);
+      setForm(prev => ({ ...prev, password: "" }));
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
     } catch (error) {
@@ -98,8 +104,20 @@ export default function ClientProfilePage() {
   };
 
   const handleEdit = (key: EditableField) => {
-    setOriginalForm({ ...form });
-    setEditingField(key);
+    if (key === "name" || key === "lastname") {
+      setShowWarningModal(key);
+    } else {
+      setOriginalForm({ ...form });
+      setEditingField(key);
+    }
+  };
+
+  const confirmEdit = () => {
+    if (showWarningModal) {
+      setOriginalForm({ ...form });
+      setEditingField(showWarningModal);
+      setShowWarningModal(null);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -108,6 +126,7 @@ export default function ClientProfilePage() {
     }
     setEditingField(null);
     setOriginalForm(null);
+    setShowPassword(false);
   };
 
   const handleLogout = () => {
@@ -121,36 +140,6 @@ export default function ClientProfilePage() {
 
   if (loading) return <p className="p-6">Cargando...</p>;
 
-  if (!user) {
-    return (
-      <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
-        <ClientSidebar />
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold mb-4">Perfil</h1>
-          <p className="text-muted-foreground">Crea una cuenta para ingresar a este apartado.</p>
-          <Button className="mt-4" onClick={() => router.push("/auth/register")}>
-            Crear cuenta
-          </Button>
-        </div>
-      </main>
-    );
-  }
-
-  const fields: { label: string; key: EditableField; type?: string }[] =
-    clientId !== null
-      ? [
-          { label: "Nombre", key: "name" },
-          { label: "Apellidos", key: "lastname" },
-          { label: "Correo Electrónico", key: "email" },
-          { label: "CI", key: "ci" },
-          { label: "Fecha de nacimiento", key: "birthdate", type: "date" },
-        ]
-      : [
-          { label: "Nombre", key: "name" },
-          { label: "Apellidos", key: "lastname" },
-          { label: "Correo Electrónico", key: "email" },
-        ];
-
   return (
     <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
       <ClientSidebar />
@@ -162,45 +151,91 @@ export default function ClientProfilePage() {
         </p>
 
         <div className="space-y-4">
-          {fields.map(({ label, key, type }) => (
+          {["name", "lastname"].map((key) => (
             <div key={key} className="flex items-center gap-4">
-              <span className="w-40 font-medium text-right">{label}:</span>
+              <span className="w-40 font-medium text-right">
+                {key === "name" ? "Nombre:" : "Apellidos:"}
+              </span>
               <Input
                 name={key}
-                type={type || "text"}
-                value={form[key]}
+                value={form[key as EditableField]}
                 onChange={handleChange}
                 disabled={editingField !== key}
                 className="flex-1"
               />
               {editingField === key ? (
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="mt-0 bg-primary text-white hover:bg-primary/90 hover:text-black transition-colors"
-                    onClick={() => handleUpdate(key)}
-                  >
+                  <Button variant="outline" onClick={() => handleUpdate(key as EditableField)}>
                     Guardar
                   </Button>
                   <Button
                     variant="ghost"
-                    className="mt-0 text-red-500 hover:text-red-700"
                     onClick={handleCancelEdit}
+                    className="text-red-500 hover:text-red-700"
                   >
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
               ) : (
-                <Button
-                  variant="outline"
-                  className="mt-0 hover:bg-primary hover:text-white transition-colors"
-                  onClick={() => handleEdit(key)}
-                >
+                <Button variant="outline" onClick={() => handleEdit(key as EditableField)}>
                   <Pencil className="w-4 h-4 mr-1" /> Editar
                 </Button>
               )}
             </div>
           ))}
+
+          {/* Correo (solo lectura) */}
+          <div className="flex items-center gap-4">
+            <span className="w-40 font-medium text-right">Correo Electrónico:</span>
+            <Input
+              name="email"
+              value={form.email}
+              disabled
+              className="flex-1 text-muted-foreground"
+            />
+          </div>
+
+          {/* Contraseña */}
+          <div className="flex items-center gap-4">
+            <span className="w-40 font-medium text-right">Nueva Contraseña:</span>
+            <div className="relative flex-1">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange}
+                disabled={editingField !== "password"}
+                placeholder="••••••••"
+              />
+              {editingField === "password" && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-2.5 text-muted-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              )}
+            </div>
+            {editingField === "password" ? (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => handleUpdate("password")}>
+                  Guardar
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleCancelEdit}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" onClick={() => handleEdit("password")}>
+                <Pencil className="w-4 h-4 mr-1" /> Editar
+              </Button>
+            )}
+          </div>
         </div>
 
         <Button variant="destructive" className="mt-6" onClick={handleLogout}>
@@ -208,6 +243,7 @@ export default function ClientProfilePage() {
         </Button>
       </div>
 
+      {/* Éxito */}
       <Dialog open={showSuccess} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
@@ -216,14 +252,31 @@ export default function ClientProfilePage() {
         </DialogContent>
       </Dialog>
 
+      {/* Cierre de sesión */}
       <Dialog open={logoutDialog} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cerrando sesión...</DialogTitle>
           </DialogHeader>
+          <p className="text-muted-foreground">Serás redirigido al inicio en unos instantes.</p>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de advertencia para nombre/apellido */}
+      <Dialog open={!!showWarningModal} onOpenChange={() => setShowWarningModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Advertencia</DialogTitle>
+          </DialogHeader>
           <p className="text-muted-foreground">
-            Serás redirigido al inicio en unos instantes.
+            Solo puedes modificar tu nombre o apellido una vez cada 30 días. ¿Deseas continuar?
           </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWarningModal(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmEdit}>Continuar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </main>
