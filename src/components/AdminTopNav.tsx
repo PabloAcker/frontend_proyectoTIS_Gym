@@ -10,6 +10,7 @@ import {
   ReceiptText,
   UserCog,
   UsersRound,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -52,6 +53,13 @@ export function AdminTopNav() {
           Empleados
         </Button>
       )}
+      <Button
+        variant={isActive("/admin/branches") ? "default" : "outline"}
+        onClick={() => router.push("/admin/branches")}
+      >
+        <MapPin className="w-4 h-4 mr-2" />
+        Sucursales
+      </Button>
       <Button
         variant={isActive("/admin/memberships") ? "default" : "outline"}
         onClick={() => router.push("/admin/memberships")}

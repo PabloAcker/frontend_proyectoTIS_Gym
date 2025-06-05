@@ -1,21 +1,11 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useEffect } from "react";
 
-interface Props {
-  selectedCity: string;
-}
-
-// Coordenadas por ciudad
-const branchLocations: Record<string, { lat: number; lng: number }> = {
-  "la-paz": { lat: -16.5, lng: -68.15 },
-  "cochabamba": { lat: -17.3935, lng: -66.157 },
-  "santa-cruz": { lat: -17.7833, lng: -63.1821 },
-};
-
-// Icono desde /public/images
+// Icono de sucursal
 const icon = L.icon({
   iconUrl: "/images/sucursal-icon.png",
   iconSize: [40, 40],
@@ -23,15 +13,42 @@ const icon = L.icon({
   popupAnchor: [0, -40],
 });
 
-export default function BranchMap({ selectedCity }: Props) {
-  const coords = branchLocations[selectedCity] || branchLocations["la-paz"];
+// Props
+interface Branch {
+  id: number;
+  name: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  address?: string;
+  services?: string;
+}
+
+interface Props {
+  branches: Branch[];
+  selectedBranchId: number | null;
+}
+
+// Componente auxiliar para mover el mapa cuando cambia la sucursal seleccionada
+function ChangeView({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], 14); // centrado y zoom
+  }, [lat, lng, map]);
+  return null;
+}
+
+export default function BranchMap({ branches, selectedBranchId }: Props) {
+  const selectedBranch = branches.find((b) => b.id === selectedBranchId);
+
+  const defaultCenter = selectedBranch?.coordinates || { lat: -16.5, lng: -68.15 };
 
   return (
     <div className="flex justify-center">
       <div className="w-full max-w-3xl space-y-4">
-        {/* Map */}
         <MapContainer
-          center={[coords.lat, coords.lng]}
+          center={[defaultCenter.lat, defaultCenter.lng]}
           zoom={14}
           scrollWheelZoom={false}
           style={{
@@ -45,11 +62,29 @@ export default function BranchMap({ selectedCity }: Props) {
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <Marker position={[coords.lat, coords.lng]} icon={icon}>
-            <Popup>
-              Sucursal en {selectedCity.replace("-", " ").toUpperCase()}
-            </Popup>
-          </Marker>
+
+          {/* Centrar vista */}
+          {selectedBranch && (
+            <>
+              <ChangeView
+                lat={selectedBranch.coordinates.lat}
+                lng={selectedBranch.coordinates.lng}
+              />
+              <Marker
+                position={[
+                  selectedBranch.coordinates.lat,
+                  selectedBranch.coordinates.lng,
+                ]}
+                icon={icon}
+              >
+                <Popup>
+                  <strong>{selectedBranch.name}</strong>
+                  <br />
+                  {selectedBranch.address || "Dirección no disponible"}
+                </Popup>
+              </Marker>
+            </>
+          )}
         </MapContainer>
       </div>
     </div>
