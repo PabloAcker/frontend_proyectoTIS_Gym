@@ -9,6 +9,7 @@ import {
   Layers,
   ReceiptText,
   UserCog,
+  UsersRound,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -27,6 +28,13 @@ export function AdminTopNav() {
       >
         <Home className="w-4 h-4 mr-2" />
         Panel
+      </Button>
+      <Button
+        variant={isActive("/admin/users") ? "default" : "outline"}
+        onClick={() => router.push("/admin/users")}
+      >
+        <UsersRound className="w-4 h-4 mr-2" />
+        Usuarios
       </Button>
       <Button
         variant={isActive("/admin/clients") ? "default" : "outline"}

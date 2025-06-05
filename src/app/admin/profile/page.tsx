@@ -10,28 +10,33 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil, X} from "lucide-react";
+import { Pencil, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import { AdminTopNav } from "@/components/AdminTopNav";
 
-type EditableField = "name" | "lastname" | "email";
+type EditableField = "name" | "lastname" | "password";
 
 export default function AdminProfilePage() {
   const router = useRouter();
   const { user, loading, unauthorized } = useAuth(["admin", "empleado"]);
 
-  const [form, setForm] = useState<Record<EditableField, string>>({
+  const [form, setForm] = useState<Record<EditableField | "email", string>>({
     name: "",
     lastname: "",
     email: "",
+    password: "",
   });
 
   const [originalForm, setOriginalForm] = useState<typeof form | null>(null);
   const [editingField, setEditingField] = useState<EditableField | null>(null);
+  const [showWarningModal, setShowWarningModal] = useState<EditableField | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [logoutDialog, setLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -43,6 +48,7 @@ export default function AdminProfilePage() {
           name: data.name || "",
           lastname: data.lastname || "",
           email: data.email || "",
+          password: "",
         });
       })
       .catch(() => toast.error("Error al cargar datos del usuario"));
@@ -63,6 +69,8 @@ export default function AdminProfilePage() {
 
       setEditingField(null);
       setOriginalForm(null);
+      setForm((prev) => ({ ...prev, password: "" }));
+      setShowPassword(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
     } catch (error) {
@@ -76,8 +84,20 @@ export default function AdminProfilePage() {
   };
 
   const handleEdit = (key: EditableField) => {
-    setOriginalForm({ ...form });
-    setEditingField(key);
+    if (key === "name" || key === "lastname") {
+      setShowWarningModal(key);
+    } else {
+      setOriginalForm({ ...form });
+      setEditingField(key);
+    }
+  };
+
+  const confirmEdit = () => {
+    if (showWarningModal) {
+      setOriginalForm({ ...form });
+      setEditingField(showWarningModal);
+      setShowWarningModal(null);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -86,9 +106,11 @@ export default function AdminProfilePage() {
     }
     setEditingField(null);
     setOriginalForm(null);
+    setShowPassword(false);
   };
 
   const handleLogout = () => {
+    setIsLoggingOut(true);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setLogoutDialog(true);
@@ -97,14 +119,8 @@ export default function AdminProfilePage() {
     }, 2000);
   };
 
-  if (unauthorized) return <UnauthorizedDialog />;
+  if (unauthorized && !isLoggingOut) return <UnauthorizedDialog />;
   if (loading) return <p className="p-6">Verificando acceso...</p>;
-
-  const fields: { label: string; key: EditableField }[] = [
-    { label: "Nombre", key: "name" },
-    { label: "Apellidos", key: "lastname" },
-    { label: "Correo Electrónico", key: "email" },
-  ];
 
   return (
     <main className="p-6 min-h-screen bg-background text-foreground">
@@ -116,48 +132,95 @@ export default function AdminProfilePage() {
       </div>
 
       <div className="max-w-3xl space-y-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-6">
           La información que aparece aquí es pública, ten cuidado con lo que compartes.
         </p>
 
-        {fields.map(({ label, key }) => (
+        {["name", "lastname"].map((key) => (
           <div key={key} className="flex items-center gap-4">
-            <span className="w-40 font-medium text-right">{label}:</span>
+            <span className="w-40 font-medium text-right">
+              {key === "name" ? "Nombre:" : "Apellidos:"}
+            </span>
             <Input
               name={key}
-              value={form[key]}
+              value={form[key as EditableField]}
               onChange={handleChange}
               disabled={editingField !== key}
               className="flex-1"
             />
             {editingField === key ? (
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="bg-primary text-white hover:bg-primary/90 hover:text-black"
-                  onClick={() => handleUpdate(key)}
-                >
+                <Button variant="outline" onClick={() => handleUpdate(key as EditableField)}>
                   Guardar
                 </Button>
                 <Button
                   variant="ghost"
-                  className="text-red-500 hover:text-red-700"
                   onClick={handleCancelEdit}
+                  className="text-red-500 hover:text-red-700"
                 >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                className="hover:bg-primary hover:text-white"
-                onClick={() => handleEdit(key)}
-              >
+              <Button variant="outline" onClick={() => handleEdit(key as EditableField)}>
                 <Pencil className="w-4 h-4 mr-1" /> Editar
               </Button>
             )}
           </div>
         ))}
+
+        {/* Correo solo lectura */}
+        <div className="flex items-center gap-4">
+          <span className="w-40 font-medium text-right">Correo Electrónico:</span>
+          <Input
+            name="email"
+            value={form.email}
+            disabled
+            className="flex-1 text-muted-foreground"
+          />
+        </div>
+
+        {/* Contraseña */}
+        <div className="flex items-center gap-4">
+          <span className="w-40 font-medium text-right">Nueva Contraseña:</span>
+          <div className="relative flex-1">
+            <Input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange}
+              disabled={editingField !== "password"}
+              placeholder="••••••••"
+            />
+            {editingField === "password" && (
+              <button
+                type="button"
+                className="absolute right-2 top-2.5 text-muted-foreground"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            )}
+          </div>
+          {editingField === "password" ? (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => handleUpdate("password")}>
+                Guardar
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleCancelEdit}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" onClick={() => handleEdit("password")}>
+              <Pencil className="w-4 h-4 mr-1" /> Editar
+            </Button>
+          )}
+        </div>
 
         <Button variant="destructive" className="mt-6" onClick={handleLogout}>
           Cerrar sesión
@@ -179,9 +242,25 @@ export default function AdminProfilePage() {
           <DialogHeader>
             <DialogTitle>Cerrando sesión...</DialogTitle>
           </DialogHeader>
+          <p className="text-muted-foreground">Serás redirigido al inicio en unos instantes.</p>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal advertencia edición nombre/apellido */}
+      <Dialog open={!!showWarningModal} onOpenChange={() => setShowWarningModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Advertencia</DialogTitle>
+          </DialogHeader>
           <p className="text-muted-foreground">
-            Serás redirigido al inicio en unos instantes.
+            Solo puedes modificar tu nombre o apellido una vez cada 30 días. ¿Deseas continuar?
           </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWarningModal(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmEdit}>Continuar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </main>
