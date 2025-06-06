@@ -61,18 +61,14 @@ export default function AdminUsersPage() {
 
   return (
     <main className="p-6 bg-background text-foreground min-h-screen">
+      {/* Nav superior y título */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
-        <div className="flex gap-2">
-          <AdminTopNav />
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="mr-2 w-4 h-4" />
-            Crear Usuario
-          </Button>
-        </div>
+        <AdminTopNav />
       </div>
 
-      <div className="mb-4">
+      {/* Filtro y botón de acción en la misma fila */}
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <Input
           type="text"
           placeholder="Filtrar por nombre, apellido o correo"
@@ -80,7 +76,13 @@ export default function AdminUsersPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-md"
         />
+
+        <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Plus className="mr-2 w-4 h-4" />
+          Crear Usuario
+        </Button>
       </div>
+
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300 text-sm">
