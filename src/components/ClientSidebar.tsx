@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Layers,
   ClipboardList,
@@ -26,6 +26,7 @@ export function ClientSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [logoutDialog, setLogoutDialog] = useState(false);
+  const [userName, setUserName] = useState("");
 
   const isActive = (path: string) => pathname === path;
 
@@ -34,6 +35,18 @@ export function ClientSidebar() {
     localStorage.removeItem("token");
     router.push("/");
   };
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUserName(parsed.name || "");
+      } catch (e) {
+        console.error("Error al parsear usuario:", e);
+      }
+    }
+  }, []);
 
   return (
     <aside className="w-full sm:w-64 p-4 bg-[#e2f1ef] rounded-md min-h-[90vh] flex flex-col justify-between">
@@ -94,19 +107,26 @@ export function ClientSidebar() {
         </Button>
       </nav>
 
-      {/* Botón de cerrar sesión */}
+      {/* Botón de cerrar sesión con nombre del usuario debajo */}
       <div className="mt-4 pt-4">
         <Button
           variant="ghost"
-          className="w-full justify-start"
+          className="w-full justify-start flex-col items-start text-left"
           onClick={() => setLogoutDialog(true)}
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Cerrar sesión
+          <div className="flex items-center">
+            <LogOut className="w-4 h-4 mr-2" />
+            Cerrar sesión -
+          {userName && (
+            <span className="ml-1">
+              {userName}
+            </span>
+          )}
+          </div>
         </Button>
       </div>
 
-      {/* Modal de confirmación de logout */}
+      {/* Modal de confirmación */}
       <AlertDialog open={logoutDialog} onOpenChange={setLogoutDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

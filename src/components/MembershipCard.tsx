@@ -14,28 +14,33 @@ interface Membership {
 
 export const MembershipCard = ({
   membership,
-  hideDescription = false,
 }: {
   membership: Membership;
   hideDescription?: boolean;
 }) => {
+  const getImagePath = (name: string) => {
+    const key = name.toLowerCase();
+    if (key.includes("mensual")) return "/images/plan_mensual.avif";
+    if (key.includes("trimestral")) return "/images/plan_trimestral.jpg";
+    if (key.includes("anual")) return "/images/plan_anual.jpg";
+    return "/images/cardMembership.png";
+  };
+
   return (
     <div className="bg-card p-4 rounded-xl shadow-md border border-border">
       <div className="flex flex-col gap-3">
         <Image
-          src="/images/cardMembership.png"
+          src={getImagePath(membership.name)}
           alt={`Imagen de ${membership.name}`}
           width={400}
           height={200}
           className="rounded-md object-cover w-full h-48"
         />
         <h3 className="text-xl font-bold text-foreground">{membership.name}</h3>
-        {!hideDescription && (
-          <p className="text-muted-foreground">{membership.description}</p>
-        )}
         <div className="text-sm text-foreground">
-          <p><strong>Duración:</strong> {membership.duration}</p>
-          <p><strong>Precio:</strong> Bs. {membership.price}</p>
+          <p>
+            <strong>Precio:</strong> Bs. {membership.price}
+          </p>
         </div>
 
         <Link href={`/memberships/${membership.id}`}>
