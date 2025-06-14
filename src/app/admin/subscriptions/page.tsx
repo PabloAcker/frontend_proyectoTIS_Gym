@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, X,} from "lucide-react";
+import { Check, X, BadgePlus } from "lucide-react";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,14 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { AdminTopNav } from "@/components/AdminTopNav";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input as UiInput } from "@/components/ui/input";
 
 interface Subscription {
   id: number;
@@ -47,6 +55,10 @@ export default function AdminSubscriptionsPage() {
   const [search, setSearch] = useState("");
   const [selectedSubId, setSelectedSubId] = useState<number | null>(null);
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
+
+  const [showRFIDDialog, setShowRFIDDialog] = useState(false);
+  const [selectedRFIDSub, setSelectedRFIDSub] = useState<Subscription | null>(null);
+  const [rfidCode, setRfidCode] = useState("");
 
   const fetchSubscriptions = async () => {
     try {
@@ -102,6 +114,44 @@ export default function AdminSubscriptionsPage() {
     }
   };
 
+const handleRFIDRegister = async () => {
+  if (!selectedRFIDSub || !rfidCode) return;
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/access/rfid-access/${selectedRFIDSub.id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rfid_code: rfidCode }),
+      }
+    );
+
+    const contentType = res.headers.get("content-type");
+    let data: { error?: string } = {};
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(`Respuesta no válida: ${text}`);
+    }
+
+    if (!res.ok) throw new Error(data.error || "Error al registrar tarjeta");
+
+    toast.success("Tarjeta RFID registrada correctamente");
+    setShowRFIDDialog(false);
+    setRfidCode("");
+  } catch (error: unknown) {
+    console.error("❌ Error al registrar tarjeta RFID:", error);
+    if (error instanceof Error) {
+      toast.error(error.message || "No se pudo registrar la tarjeta");
+    } else {
+      toast.error("No se pudo registrar la tarjeta");
+    }
+  }
+};
+
   if (unauthorized) return <UnauthorizedDialog />;
   if (loading) return <p className="p-6">Verificando acceso...</p>;
 
@@ -136,6 +186,7 @@ export default function AdminSubscriptionsPage() {
               <th className="p-2 border">Comprobante</th>
               <th className="p-2 border">Estado</th>
               <th className="p-2 border">Acciones</th>
+              <th className="p-2 border">RFID</th>
             </tr>
           </thead>
           <tbody>
@@ -192,6 +243,23 @@ export default function AdminSubscriptionsPage() {
                     <span className="text-muted-foreground italic">—</span>
                   )}
                 </td>
+                <td className="p-2 border">
+                  {s.state === "aprobado" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedRFIDSub(s);
+                        setShowRFIDDialog(true);
+                      }}
+                    >
+                      <BadgePlus className="w-4 h-4 mr-1" />
+                      Registrar
+                    </Button>
+                  ) : (
+                    "—"
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -224,6 +292,27 @@ export default function AdminSubscriptionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showRFIDDialog} onOpenChange={setShowRFIDDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Registrar tarjeta RFID</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Código RFID:</Label>
+            <UiInput
+              value={rfidCode}
+              onChange={(e) => setRfidCode(e.target.value)}
+              placeholder="Escanea o ingresa el código..."
+            />
+            <div className="flex justify-end">
+              <Button onClick={handleRFIDRegister} disabled={!rfidCode}>
+                Registrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

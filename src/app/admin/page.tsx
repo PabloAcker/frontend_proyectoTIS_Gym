@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -20,11 +21,26 @@ export default function AdminPage() {
     { month: string; subs: number; withSub: number; withoutSub: number; earnings: number }[]
   >([]);
 
+  const [branchCount, setBranchCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchBranchCount = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/branches`);
+        const data = await res.json();
+        setBranchCount(data.length || 0);
+      } catch (err) {
+        console.error("Error al obtener sucursales:", err);
+      }
+    };
+
+    fetchBranchCount();
+  }, []);
+
   type SubsData = { month: string; count: number };
   type ClientsData = { month: string; with: number; without: number };
   type EarningsData = { month: string; total: number };
 
-  // Cargar datos reales al montar
   useEffect(() => {
     const fetchData = async () => {
       const [subsRes, clientsRes, earningsRes] = await Promise.all([
@@ -39,21 +55,21 @@ export default function AdminPage() {
         earningsRes.json(),
       ]);
 
-        const allMonths = Array.from(
-          new Set([
-            ...subs.map((d: SubsData) => d.month),
-            ...clients.map((d: ClientsData) => d.month),
-            ...earnings.map((d: EarningsData) => d.month),
-          ])
-        );
+      const allMonths = Array.from(
+        new Set([
+          ...subs.map((d: SubsData) => d.month),
+          ...clients.map((d: ClientsData) => d.month),
+          ...earnings.map((d: EarningsData) => d.month),
+        ])
+      );
 
-        const merged = allMonths.map((month) => ({
-          month,
-          subs: subs.find((s: SubsData) => s.month === month)?.count || 0,
-          withSub: clients.find((c: ClientsData) => c.month === month)?.with || 0,
-          withoutSub: clients.find((c: ClientsData) => c.month === month)?.without || 0,
-          earnings: earnings.find((e: EarningsData) => e.month === month)?.total || 0,
-        }));
+      const merged = allMonths.map((month) => ({
+        month,
+        subs: subs.find((s: SubsData) => s.month === month)?.count || 0,
+        withSub: clients.find((c: ClientsData) => c.month === month)?.with || 0,
+        withoutSub: clients.find((c: ClientsData) => c.month === month)?.without || 0,
+        earnings: earnings.find((e: EarningsData) => e.month === month)?.total || 0,
+      }));
 
       setTableData(merged);
     };
@@ -67,7 +83,6 @@ export default function AdminPage() {
 
     const pdf = new jsPDF("p", "mm", "a4");
 
-    // Página 1: gráficos
     const canvas = await html2canvas(input);
     const imgData = canvas.toDataURL("image/png");
     const imgProps = pdf.getImageProperties(imgData);
@@ -77,7 +92,6 @@ export default function AdminPage() {
     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.addPage();
 
-    // Página 2: tabla (dibujada con jsPDF)
     pdf.setFontSize(12);
     pdf.text("Reporte Detallado - Dashboard", 14, 14);
     pdf.setFontSize(10);
@@ -88,7 +102,6 @@ export default function AdminPage() {
     const colWidths = [30, 35, 40, 40, 35];
     const cols = ["Mes", "Suscripciones", "Con suscripción", "Sin suscripción", "Ganancias (Bs.)"];
 
-    // Encabezado
     cols.forEach((col, i) => {
       pdf.setFillColor("#eeeeee");
       pdf.rect(14 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY, colWidths[i], rowHeight, "F");
@@ -96,7 +109,6 @@ export default function AdminPage() {
       pdf.text(col, 16 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY + 6);
     });
 
-    // Filas
     tableData.forEach((row, rowIndex) => {
       const y = startY + (rowIndex + 1) * rowHeight;
       const values = [row.month, row.subs, row.withSub, row.withoutSub, row.earnings];
@@ -120,9 +132,13 @@ export default function AdminPage() {
         <AdminTopNav />
       </div>
 
-      <div className="flex justify-end mb-6">
+      <div className="flex gap-3 justify-end items-center mb-6">
+        <div className="outline text-center rounded-md px-4 py-2 h-10 flex items-center justify-center text-sm text-primary/bold font-medium shadow-sm">
+          Sucursales registradas: <span className="font-bold ml-2">{branchCount}</span>
+        </div>
         <Button onClick={exportToPDF}>Exportar Reporte</Button>
       </div>
+
 
       <div id="report-content" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <SubscriptionsPerMonthChart />
