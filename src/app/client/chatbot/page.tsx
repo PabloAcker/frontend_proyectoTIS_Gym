@@ -8,6 +8,10 @@ import { ClientSidebar } from "@/components/ClientSidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { BicepsFlexed, BotIcon, UtensilsCrossedIcon, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 const steps = [
   { label: "¿Cuál es tu peso actual (kg)?", name: "peso", options: ["<50", "50-60", "60-70", "70-80", "80+"] },
@@ -18,12 +22,39 @@ const steps = [
 ];
 
 export default function ChatbotPage() {
+  const { user, loading, unauthorized } = useAuth(["cliente"]);
+  const router = useRouter();
+
+  const [tieneSuscripcion, setTieneSuscripcion] = useState<boolean>(false);
   const [tipo, setTipo] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
   const [respuesta, setRespuesta] = useState("");
+  const [generando, setGenerando] = useState(false);
+const [verificandoSubscripcion, setVerificandoSubscripcion] = useState(true);
 
+  // Verifica si tiene suscripción
+  useEffect(() => {
+    const verificar = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user?.id}`);
+        const data = await res.json();
+        setTieneSuscripcion(data && data.state === "aprobado");
+      } catch {
+        setTieneSuscripcion(false);
+      } finally {
+        setVerificandoSubscripcion(false); // ✅ Esto desbloquea la UI
+      }
+    };
+
+    if (user) {
+      verificar();
+    } else {
+      setVerificandoSubscripcion(false); // También cubre el caso donde user es null
+    }
+  }, [user]);
+
+  // Recuperar progreso del chatbot
   useEffect(() => {
     const saved = localStorage.getItem("chatbot-progress");
     if (saved) {
@@ -39,6 +70,10 @@ export default function ChatbotPage() {
     localStorage.setItem("chatbot-progress", JSON.stringify({ tipo, step, answers, respuesta }));
   }, [tipo, step, answers, respuesta]);
 
+    if (loading || verificandoSubscripcion) {
+    return <p className="p-6">Verificando acceso...</p>;
+  }
+
   const handleSelect = (value: string) => {
     const name = steps[step].name;
     const newAnswers = { ...answers, [name]: value };
@@ -52,7 +87,7 @@ export default function ChatbotPage() {
   };
 
   const enviarAlBackend = async (data: Record<string, string>) => {
-    setLoading(true);
+    setGenerando(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chatbot`, {
         method: "POST",
@@ -67,7 +102,7 @@ export default function ChatbotPage() {
       console.error(err);
       Swal.fire("Error", "No se pudo generar el plan. Intenta más tarde.", "error");
     } finally {
-      setLoading(false);
+      setGenerando(false);
     }
   };
 
@@ -97,8 +132,8 @@ export default function ChatbotPage() {
     const lineHeight = 7;
     splitText.forEach((line: string) => {
       if (y > 270) {
-      doc.addPage();
-      y = 20;
+        doc.addPage();
+        y = 20;
       }
       doc.text(line, 20, y);
       y += lineHeight;
@@ -117,89 +152,111 @@ export default function ChatbotPage() {
 
   const handleBack = () => {
     if (step === 0) {
-      setTipo(null);
-      setAnswers({});
-      localStorage.removeItem("chatbot-progress");
+      reset();
     } else {
       setStep(step - 1);
     }
   };
+
+  if (loading) return <p className="p-6">Verificando acceso...</p>;
+  if (unauthorized || !user) return null;
 
   return (
     <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
       <ClientSidebar />
 
       <div className="flex-1 p-6 flex justify-center items-center">
-        <Card className="w-full max-w-xl border-l-4 border-primary shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">
-              🤖 Asistente de {tipo === "rutina" ? "rutina" : tipo === "dieta" ? "dieta" : "IA"}
-            </CardTitle>
-          </CardHeader>
+        {tieneSuscripcion ? (
+          <Card className="w-full max-w-xl border-l-4 border-primary shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-center text-2xl flex items-center justify-center gap-2">
+                <BotIcon className="w-6 h-6 text-primary" />
+                Asistente de {tipo === "rutina" ? "rutina" : tipo === "dieta" ? "dieta" : "IA"}
+              </CardTitle>
+            </CardHeader>
 
-          <CardContent className="space-y-6">
-            {!tipo ? (
-              <div className="text-center space-y-4">
-                <p className="text-muted-foreground">¿Qué deseas generar hoy?</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button className="w-full" onClick={() => setTipo("dieta")}>
-                    🍽 Dieta personalizada
-                  </Button>
-                  <Button className="w-full" onClick={() => setTipo("rutina")}>
-                    🏋️ Rutina personalizada
-                  </Button>
-                </div>
-              </div>
-            ) : respuesta ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <h2 className="text-lg font-semibold mb-2">Resultado generado:</h2>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{respuesta}</p>
-
-                <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                  <Button onClick={descargarPDF} className="w-full sm:w-auto">
-                    Descargar PDF
-                  </Button>
-                  <Button variant="outline" onClick={reset} className="w-full sm:w-auto">
-                    Volver a empezar
-                  </Button>
-                </div>
-              </motion.div>
-            ) : (
-              <>
-                <motion.h2
-                  key={step}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-md font-medium text-center text-foreground"
-                >
-                  {steps[step].label}
-                </motion.h2>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {steps[step].options.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant="outline"
-                      onClick={() => handleSelect(opt)}
-                      className="text-sm w-full"
-                    >
-                      {opt}
+            <CardContent className="space-y-6">
+              {!tipo ? (
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground">¿Qué deseas generar hoy?</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Button className="w-full" onClick={() => setTipo("dieta")}>
+                      <UtensilsCrossedIcon className="w-4 h-4 mr-2" />
+                      Dieta personalizada
                     </Button>
-                  ))}
+                    <Button className="w-full" onClick={() => setTipo("rutina")}>
+                      <BicepsFlexed className="w-4 h-4 mr-2" />
+                      Rutina personalizada
+                    </Button>
+                  </div>
                 </div>
+              ) : respuesta ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <h2 className="text-lg font-semibold mb-2">Resultado generado:</h2>
+                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">{respuesta}</p>
 
-                <div className="flex justify-between mt-4">
-                  <Button variant="ghost" onClick={handleBack}>
-                    ⬅ Volver
-                  </Button>
-                  {loading && (
-                    <p className="text-sm text-muted-foreground">⏳ Generando respuesta...</p>
-                  )}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                    <Button onClick={descargarPDF} className="w-full sm:w-auto">
+                      Descargar PDF
+                    </Button>
+                    <Button variant="outline" onClick={reset} className="w-full sm:w-auto">
+                      Volver a empezar
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : (
+                <>
+                  <motion.h2
+                    key={step}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-md font-medium text-center text-foreground"
+                  >
+                    {steps[step].label}
+                  </motion.h2>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {steps[step].options.map((opt) => (
+                      <Button
+                        key={opt}
+                        variant="outline"
+                        onClick={() => handleSelect(opt)}
+                        className="text-sm w-full"
+                      >
+                        {opt}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-between mt-4">
+                    <Button variant="ghost" onClick={handleBack}>
+                      ⬅ Volver
+                    </Button>
+                    {generando && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <ReloadIcon className="h-4 w-4 animate-spin" />
+                        Generando respuesta...
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="text-center space-y-6 max-w-md mx-auto">
+            <h2 className="text-xl font-semibold text-foreground flex items-center justify-center gap-2">
+              <Lock className="w-5 h-5 text-primary" />
+              Desbloquea esta funcionalidad
+            </h2>
+            <p className="text-muted-foreground">
+              Suscríbete a alguno de nuestros planes y accede a un plan de dieta o rutina completamente personalizado gracias a nuestra inteligencia artificial.
+            </p>
+            <Button onClick={() => router.push("/memberships")}>
+              Ver planes de membresía
+            </Button>
+          </div>
+        )}
       </div>
     </main>
   );
