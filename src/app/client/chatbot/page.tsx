@@ -43,7 +43,7 @@ const [verificandoSubscripcion, setVerificandoSubscripcion] = useState(true);
       } catch {
         setTieneSuscripcion(false);
       } finally {
-        setVerificandoSubscripcion(false); // ✅ Esto desbloquea la UI
+        setVerificandoSubscripcion(false);
       }
     };
 

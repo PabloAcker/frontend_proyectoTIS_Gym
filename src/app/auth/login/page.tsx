@@ -31,9 +31,9 @@ export default function LoginPage() {
       if (data.user.role === "admin" || data.user.role === "empleado") {
         router.push("/admin");
       } else if (data.user.role === "cliente") {
-        router.push("/client");
-      } else {
         router.push("/");
+      } else {
+        router.push("/client");
       }
     } catch (err) {
       if (err instanceof Error) {
