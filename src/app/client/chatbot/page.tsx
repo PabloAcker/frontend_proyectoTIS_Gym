@@ -139,6 +139,15 @@ const [verificandoSubscripcion, setVerificandoSubscripcion] = useState(true);
       y += lineHeight;
     });
 
+    y += 15;
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text(
+      "Este asistente no está avalado por ningún profesional médico. Consulte siempre a un especialista.",
+      20,
+      y
+    );
+
     doc.save(`${tipo}_personalizado.pdf`);
   };
 
@@ -173,6 +182,9 @@ const [verificandoSubscripcion, setVerificandoSubscripcion] = useState(true);
                 <BotIcon className="w-6 h-6 text-primary" />
                 Asistente de {tipo === "rutina" ? "rutina" : tipo === "dieta" ? "dieta" : "IA"}
               </CardTitle>
+              <p className="text-xs text-muted-foreground text-center mt-1">
+                Este asistente no está avalado por ningún profesional médico. Consulta siempre a un especialista, esta es solo una sugerencia automatizada.
+              </p>
             </CardHeader>
 
             <CardContent className="space-y-6">

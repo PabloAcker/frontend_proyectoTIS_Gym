@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Eye, Trash2, Plus } from "lucide-react";
+import { Pencil, Eye, Trash2, Plus, ImagePlus } from "lucide-react";
 import { AdminTopNav } from "@/components/AdminTopNav";
 import { BranchEditModal } from "@/components/BranchEditModal";
 import { BranchCreateModal } from "@/components/BranchCreateModal";
 import { BranchViewModal } from "@/components/BranchViewModal";
+import { BranchImageModal } from "@/components/BranchImageModal";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -43,6 +44,9 @@ export default function AdminBranchesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
+  const [selectedBranchIdForImage, setSelectedBranchIdForImage] = useState<number | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const fetchBranches = async () => {
     try {
@@ -120,6 +124,7 @@ export default function AdminBranchesPage() {
               <th className="p-2 border">Editar</th>
               <th className="p-2 border">Eliminar</th>
               <th className="p-2 border">Ver más</th>
+              <th className="p-2 border">Imagen de referencia</th>
             </tr>
           </thead>
           <tbody>
@@ -161,6 +166,18 @@ export default function AdminBranchesPage() {
                     <Eye className="w-4 h-4" />
                   </Button>
                 </td>
+                <td className="p-2 border">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedBranchIdForImage(b.id);
+                      setIsImageModalOpen(true);
+                    }}
+                  >
+                    <ImagePlus className="w-4 h-4" />
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -194,6 +211,16 @@ export default function AdminBranchesPage() {
           setIsViewModalOpen(false);
           setSelectedBranch(null);
         }}
+      />
+
+      <BranchImageModal
+        open={isImageModalOpen}
+        onClose={() => {
+          setIsImageModalOpen(false);
+          setSelectedBranchIdForImage(null);
+          fetchBranches();
+        }}
+        branchId={selectedBranchIdForImage}
       />
 
       {/* Dialogo de confirmación para eliminar */}

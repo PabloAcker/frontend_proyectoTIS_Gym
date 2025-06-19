@@ -39,16 +39,28 @@ export function ClientNavbar() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const token = localStorage.getItem("token");
+
+    if (!storedUser || !token) {
+      // Si falta uno de los dos, limpiamos todo
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      setUser(null);
+    } else {
       try {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
       } catch (e) {
         console.error("Error al parsear usuario:", e);
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        setUser(null);
       }
     }
+
+    // Se marca montado al final para prevenir render anticipado
+    setIsMounted(true);
   }, []);
 
   const confirmLogout = () => {
@@ -104,7 +116,6 @@ export function ClientNavbar() {
                 Dietas y rutinas
               </Button>
 
-              {/* Menú de navegación adicional */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
@@ -126,7 +137,6 @@ export function ClientNavbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Botón de cerrar sesión (fuera del dropdown) */}
               <Button
                 variant="ghost"
                 onClick={() => setLogoutDialogOpen(true)}

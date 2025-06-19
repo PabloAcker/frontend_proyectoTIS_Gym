@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
+import { BranchImageZoomModal } from "@/components/BranchImageZoomModal"; // ✅ NUEVO
 
 // 👇 Define la interfaz Branch
 interface Branch {
@@ -26,6 +28,7 @@ interface Branch {
   address?: string;
   services?: string;
   created_at?: string;
+  image?: string;
 }
 
 // 👇 Importa dinámicamente BranchMap y tipa las props
@@ -38,6 +41,11 @@ export default function BranchesPage() {
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
+
+  // ✅ Estados para el modal de imagen ampliada
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState("");
+  const [modalBranch, setModalBranch] = useState("");
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -108,33 +116,66 @@ export default function BranchesPage() {
 
         {/* Card informativa de servicios */}
         {selectedBranch && (
-          <Card className="w-full max-w-sm self-start mt-63 mr-25 border-l-4 border-primary shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-primary" />
-                Servicios en {selectedBranch.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Dirección: {selectedBranch.address || "No disponible"}
-              </p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {serviceList.length > 0 ? (
-                  serviceList.map((service, idx) => (
-                    <Badge key={idx} variant="default" className="text-sm px-3 py-1">
-                      {service}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm">Sin servicios registrados.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="w-full max-w-sm mr-35 self-start space-y-4">
+            <Card className="w-full max-w-sm self-start mt-35 border-l-4 border-primary shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  Servicios en {selectedBranch.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Dirección: {selectedBranch.address || "No disponible"}
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {serviceList.length > 0 ? (
+                    serviceList.map((service, idx) => (
+                      <Badge key={idx} variant="default" className="text-sm px-3 py-1">
+                        {service}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground text-sm">Sin servicios registrados.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Imagen de referencia si existe */}
+            {selectedBranch.image && (
+              <>
+                <div
+                  className="rounded-lg border shadow-sm p-3 bg-muted/50 cursor-pointer"
+                  onClick={() => {
+                    setModalImage(selectedBranch.image || "");
+                    setModalBranch(selectedBranch.name);
+                    setImageModalOpen(true);
+                  }}
+                >
+                  <h3 className="text-sm font-semibold mb-2">
+                    Imagen de referencia de la sucursal {selectedBranch.name}
+                  </h3>
+                  <Image
+                    src={selectedBranch.image}
+                    alt={`Imagen de ${selectedBranch.name}`}
+                    width={400}
+                    height={300}
+                    className="rounded-md w-full h-auto"
+                  />
+                </div>
+
+                <BranchImageZoomModal
+                  open={imageModalOpen}
+                  onClose={() => setImageModalOpen(false)}
+                  imageUrl={modalImage}
+                  branchName={modalBranch}
+                />
+              </>
+            )}
+          </div>
         )}
       </div>
     </main>
   );
 }
-
