@@ -79,7 +79,7 @@ export default function HomePage() {
       <ClientNavbar />
 
       {/* Sección 1 */}
-      <section className="relative w-full h-screen overflow-hidden">
+      <section className="relative w-full h-screen overflow-hidden" id="inicio">
         <Image
           src="/images/plan_trimestral.jpg"
           alt="Fondo gimnasio"
@@ -101,7 +101,8 @@ export default function HomePage() {
       </section>
 
       {/* Sección 2 */}
-      <section className="relative w-full h-screen bg-gradient-to-br from-[#e0f7fa] via-[#e8eaf6] to-[#f1f8e9] overflow-hidden flex items-center justify-center p-6">
+      <section className="relative w-full h-screen bg-gradient-to-br from-[#e0f7fa] via-[#e8eaf6] to-[#f1f8e9] overflow-hidden flex items-center justify-center p-6" 
+      id="membresias">
         <div className="absolute top-[-100px] left-[-100px] w-[400px] h-[400px] bg-[#A5F3FC] rounded-full opacity-30 blur-3xl animate-pulse" />
         <div className="absolute bottom-[-120px] right-[-80px] w-[400px] h-[400px] bg-[#C4B5FD] rounded-full opacity-30 blur-3xl animate-pulse" />
         <div className="relative z-10 w-full max-w-3xl px-4">
@@ -115,7 +116,8 @@ export default function HomePage() {
       </section>
 
       {/* Sección 3: Sucursales */}
-      <section className="relative w-full h-screen px-6 py-16 bg-gradient-to-r from-[#f0f9ff] via-[#fef6fb] to-[#f5f5f5] overflow-hidden">
+      <section className="relative w-full h-screen px-6 py-16 bg-gradient-to-r from-[#f0f9ff] via-[#fef6fb] to-[#f5f5f5] overflow-hidden"
+      id="sucursales">
         <div className="absolute top-[-60px] left-[10%] w-[300px] h-[300px] bg-[#a5f3fc] rounded-full opacity-20 blur-2xl animate-pulse" />
         <div className="absolute bottom-[-100px] right-[15%] w-[300px] h-[300px] bg-[#fbcfe8] rounded-full opacity-20 blur-2xl animate-pulse" />
 
@@ -175,6 +177,77 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+            {/* Sección 4: Footer */}
+      <footer className="bg-[#629a95] text-white py-12 px-6 scroll-smooth">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+          {/* Contacto */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Contáctanos</h3>
+            <p className="text-sm mb-1">contacto@egym.bo</p>
+            <p className="text-sm mb-1">+591 700 12345</p>
+            <p className="text-sm mt-4 font-semibold">Ubicación Sucursal Central:</p>
+            <p className="text-sm">Zona Sur Calacoto, La Paz - Bolivia</p>
+          </div>
+
+          {/* Enlaces con scroll a secciones */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Nuestros Servicios</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a
+                  href="#inicio"
+                  className="hover:underline cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("inicio")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Inicio
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#membresias"
+                  className="hover:underline cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("membresias")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Planes de membresía
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#sucursales"
+                  className="hover:underline cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("sucursales")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Sucursales
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Marca */}
+          <div>
+            <h3 className="text-xl font-bold mb-2">E‑GYM</h3>
+            <p className="text-sm">
+              Donde comienza tu mejor versión. <br />
+              Esfuérzate, entrena y supera tus límites con nosotros.
+            </p>
+          </div>
+        </div>
+
+        {/* Línea y derechos */}
+        <div className="border-t border-white/20 mt-10 pt-6 text-center text-xs text-white/60">
+          © {new Date().getFullYear()} E‑GYM. Todos los derechos reservados.
+        </div>
+      </footer>
     </main>
   );
 }
