@@ -52,7 +52,9 @@ export function AdminTopNav() {
       : []),
     { label: "Sucursales", icon: <MapPin className="w-4 h-4 mr-2" />, href: "/admin/branches" },
     { label: "Accesos RFID", icon: <BadgeCheck className="w-4 h-4 mr-2" />, href: "/admin/rfid" },
-    { label: "Membresías", icon: <Layers className="w-4 h-4 mr-2" />, href: "/admin/memberships" },
+    ...(user?.role === "admin"
+      ? [{ label: "Membresías", icon: <Layers className="w-4 h-4 mr-2" />, href: "/admin/memberships" }]
+      : []),
     { label: "Suscripciones", icon: <ReceiptText className="w-4 h-4 mr-2" />, href: "/admin/subscriptions" },
     { label: "Perfil", icon: <UserCog className="w-4 h-4 mr-2" />, href: "/admin/profile" },
   ];

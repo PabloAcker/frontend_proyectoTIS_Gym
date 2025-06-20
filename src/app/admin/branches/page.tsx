@@ -33,7 +33,7 @@ interface Branch {
 }
 
 export default function AdminBranchesPage() {
-  const { loading } = useAuth(["admin", "empleado"]);
+  const { loading, user: currentUser } = useAuth(["admin", "empleado"]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [filteredBranches, setFilteredBranches] = useState<Branch[]>([]);
   const [search, setSearch] = useState("");
@@ -122,7 +122,9 @@ export default function AdminBranchesPage() {
               <th className="p-2 border">Dirección</th>
               <th className="p-2 border">Servicios</th>
               <th className="p-2 border">Editar</th>
-              <th className="p-2 border">Eliminar</th>
+              {currentUser?.role === "admin" && (
+                <th className="p-2 border">Eliminar</th>
+              )}
               <th className="p-2 border">Ver más</th>
               <th className="p-2 border">Imagen de referencia</th>
             </tr>
@@ -145,15 +147,17 @@ export default function AdminBranchesPage() {
                     <Pencil className="w-4 h-4" />
                   </Button>
                 </td>
-                <td className="p-2 border">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setBranchToDelete(b)}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </td>
+                {currentUser?.role === "admin" && (
+                  <td className="p-2 border">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setBranchToDelete(b)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </td>
+                )}
                 <td className="p-2 border">
                   <Button
                     size="sm"
@@ -223,27 +227,28 @@ export default function AdminBranchesPage() {
         branchId={selectedBranchIdForImage}
       />
 
-      {/* Dialogo de confirmación para eliminar */}
-      <AlertDialog open={!!branchToDelete} onOpenChange={() => setBranchToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro de eliminar esta sucursal?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminarán todos los datos asociados a{" "}
-              <strong>{branchToDelete?.name}</strong>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={handleDeleteConfirmed}
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {currentUser?.role === "admin" && (
+        <AlertDialog open={!!branchToDelete} onOpenChange={() => setBranchToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro de eliminar esta sucursal?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Se eliminarán todos los datos asociados a{" "}
+                <strong>{branchToDelete?.name}</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive hover:bg-destructive/90"
+                onClick={handleDeleteConfirmed}
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </main>
   );
 }

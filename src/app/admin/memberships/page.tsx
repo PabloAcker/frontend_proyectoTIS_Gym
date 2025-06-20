@@ -13,7 +13,7 @@ import { QrUploadModal } from "@/components/QrUploadModal";
 import { AdminTopNav } from "@/components/AdminTopNav";
 
 export default function AdminMembershipsPage() {
-  const { loading } = useAuth(["admin", "empleado"]);
+  const { user, loading } = useAuth(["admin", "empleado"]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [filteredMemberships, setFilteredMemberships] = useState<Membership[]>([]);
   const [search, setSearch] = useState("");
@@ -34,8 +34,8 @@ export default function AdminMembershipsPage() {
   };
 
   useEffect(() => {
-    if (!loading) fetchMemberships();
-  }, [loading]);
+    if (!loading && user?.role === "admin") fetchMemberships();
+  }, [loading, user]);
 
   useEffect(() => {
     const lower = search.toLowerCase();
@@ -50,6 +50,7 @@ export default function AdminMembershipsPage() {
   }, [search, memberships]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
+  if (user?.role !== "admin") return <p className="p-6 text-destructive">Acceso no autorizado.</p>;
 
   return (
     <main className="p-6 min-h-screen bg-background text-foreground">

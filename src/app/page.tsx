@@ -89,9 +89,9 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 bg-black/20 z-10" />
         <div className="relative z-20 h-full flex items-center px-8 md:px-20">
-          <div className="max-w-2xl bg-black/30 p-6 rounded-md backdrop-blur-sm">
+          <div className="w-145 bg-black/30 p-6 rounded-md backdrop-blur-sm">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Bienvenido al Gimnasio E‑GYM
+              Bienvenido al Gimnasio E-GYM
             </h1>
             <p className="text-lg text-white text-opacity-90 max-w-md">
               Infórmate, adquiere tu membresía y entrena como nunca antes.

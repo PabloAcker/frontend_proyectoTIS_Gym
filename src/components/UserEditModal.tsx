@@ -20,6 +20,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface User {
   id: number;
@@ -37,11 +39,17 @@ interface Props {
 }
 
 export function UserEditModal({ user, open, onClose, onSave }: Props) {
+  const { user: currentUser } = useAuth();
   const [form, setForm] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (user) setForm(user);
+    if (user) {
+      setForm(user);
+      setPassword("");
+    }
   }, [user]);
 
   if (!user || !form) return null;
@@ -53,10 +61,17 @@ export function UserEditModal({ user, open, onClose, onSave }: Props) {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      const body = {
+        name: form.name,
+        lastname: form.lastname,
+        email: form.email,
+        ...(password ? { password } : {}),
+      };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) throw new Error("Error al guardar los cambios");
@@ -118,29 +133,51 @@ export function UserEditModal({ user, open, onClose, onSave }: Props) {
               type="email"
             />
 
-            <div className="flex justify-between gap-2">
+            {/* Contraseña solo visible si es admin */}
+            {currentUser?.role === "admin" && (
+              <div className="relative">
+                <Input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Nueva contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-2.5 text-muted-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            )}
+
+            <div className="flex justify-between gap-2 mt-2">
               <Button onClick={handleSubmit} disabled={loading}>
                 {loading ? "Guardando..." : "Guardar cambios"}
               </Button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">Eliminar Usuario</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      ¿Estás seguro de eliminar este usuario?
-                    </AlertDialogTitle>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      Sí, eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {currentUser?.role === "admin" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">Eliminar Usuario</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        ¿Estás seguro de eliminar este usuario?
+                      </AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>
+                        Sí, eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </div>
         </DialogContent>

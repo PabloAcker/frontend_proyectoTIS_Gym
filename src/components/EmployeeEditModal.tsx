@@ -9,8 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   employee: Employee | null;
@@ -28,11 +36,17 @@ interface Employee {
 }
 
 export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
+  const { user: currentUser } = useAuth();
   const [form, setForm] = useState<Employee | null>(null);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setForm(employee);
+    if (employee) {
+      setForm(employee);
+      setPassword("");
+    }
   }, [employee]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,10 +63,18 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
     if (!form) return;
     setLoading(true);
     try {
+      const payload = {
+        name: form.name,
+        lastname: form.lastname,
+        email: form.email,
+        role: form.role,
+        ...(password ? { password } : {}),
+      };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${form.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -60,6 +82,7 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
 
       toast.success("Empleado actualizado correctamente");
       await onSave();
+      onClose();
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message || "Error al actualizar empleado");
@@ -73,10 +96,11 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Editar Empleado</DialogTitle>
         </DialogHeader>
+
         {form && (
           <>
             <Input
@@ -100,6 +124,7 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
               onChange={handleChange}
               className="mb-4"
             />
+
             <Select value={form.role} onValueChange={handleRoleChange}>
               <SelectTrigger className="mb-4">
                 <SelectValue placeholder="Rol" />
@@ -109,7 +134,31 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handleSubmit} className="w-full" disabled={loading}>
+
+            {currentUser?.role === "admin" && (
+              <div className="relative mb-4">
+                <Input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Nueva contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-2.5 text-muted-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            )}
+
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full mt-2"
+            >
               {loading ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </>

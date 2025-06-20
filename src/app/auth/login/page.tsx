@@ -78,11 +78,21 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <div
-          className="text-sm text-blue-600 underline mb-4 text-right cursor-pointer hover:text-blue-800 transition"
-          onClick={() => router.push("/auth/register")}
-        >
-          ¿No tienes una cuenta? Regístrate
+        <div className="flex items-center justify-between text-sm mb-4">
+          <div
+            className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition"
+            onClick={() => router.push("/auth/register")}
+          >
+            ¿No tienes una cuenta? Regístrate
+          </div>
+          <div className="relative group ml-2">
+            <span className="text-muted-foreground cursor-default select-none text-xs border border-muted rounded-full px-2 py-0.5 hover:bg-muted">
+              ?
+            </span>
+            <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-64 text-xs text-center bg-black text-white px-3 py-2 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              ¿Olvidaste tu contraseña? Contáctate con el administrador de tu preferencia para cambiarla.
+            </div>
+          </div>
         </div>
 
         <Button className="w-full" onClick={handleLogin}>
