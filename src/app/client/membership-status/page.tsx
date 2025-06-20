@@ -36,6 +36,7 @@ export default function MembershipStatusPage() {
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [proofSent, setProofSent] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [showRejectedDialog, setShowRejectedDialog] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -44,16 +45,31 @@ export default function MembershipStatusPage() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user.id}`);
         const data = await res.json();
+
+        if (data?.state === "rechazado") {
+          localStorage.setItem("subscriptionRejected", "true");
+        }
+
         setSubscription(data || null);
+
         if (data?.state === "aprobado") {
+          localStorage.setItem("hasActiveSubscription", "true");
           localStorage.removeItem("selectedMembership");
           setSelectedPlan(null);
+        } else {
+          localStorage.removeItem("hasActiveSubscription");
         }
       } catch (error) {
         console.error("Error al cargar suscripción:", error);
         setSubscription(null);
       }
     };
+
+    const wasRejected = localStorage.getItem("subscriptionRejected");
+    if (wasRejected === "true") {
+      setTimeout(() => setShowRejectedDialog(true), 500);
+      localStorage.removeItem("subscriptionRejected");
+    }
 
     const fetchQr = async () => {
       try {
@@ -83,6 +99,7 @@ export default function MembershipStatusPage() {
       fetchSubscription();
       fetchQr();
     }
+
   }, [user]);
 
   const handleUpload = async () => {
@@ -271,6 +288,35 @@ export default function MembershipStatusPage() {
                   className="rounded-md max-w-full h-auto"
                 />
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 🆕 Dialog de suscripción rechazada */}
+        <Dialog open={showRejectedDialog} onOpenChange={setShowRejectedDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Solicitud rechazada</DialogTitle>
+            </DialogHeader>
+            <div className="text-sm text-muted-foreground space-y-4">
+              <p>
+                Tu solicitud de suscripción fue <span className="font-semibold text-destructive">rechazada</span> por un administrador o empleado del gimnasio.
+              </p>
+              <p>
+                Es posible que el comprobante enviado no haya sido válido, esté incompleto o no cumpla con los requisitos. Te recomendamos contactar con el administrador o personal del gimnasio para recibir más información.
+              </p>
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={() => {
+                  setShowRejectedDialog(false);
+                  setSubscription(null);
+                  localStorage.removeItem("selectedMembership");
+                  setSelectedPlan(null);
+                }}
+              >
+                Aceptar
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
