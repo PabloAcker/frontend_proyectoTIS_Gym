@@ -5,21 +5,20 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import Image from "next/image";
-import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { RotateCcw, PackageOpen } from "lucide-react";
 
 interface Membership {
   id: number;
   name: string;
   duration: string;
   price: number;
+  price_before_discount?: number;
 }
 
 interface Subscription {
   id: number;
   state: string;
-  proof_file: string | null;
   start_date: string;
   end_date: string;
   membership: Membership;
@@ -29,123 +28,59 @@ export default function MembershipStatusPage() {
   const { loading, user } = useAuth(["cliente"]);
   const router = useRouter();
 
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<Membership | null>(null);
-  const [proofFile, setProofFile] = useState<File | null>(null);
-  const [qrImage, setQrImage] = useState<string | null>(null);
-  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
-  const [proofSent, setProofSent] = useState(false);
-  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [showRejectedDialog, setShowRejectedDialog] = useState(false);
+  const [latest, setLatest] = useState<Subscription | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [filtered, setFiltered] = useState<Subscription[]>([]);
+  const [startFilter, setStartFilter] = useState("");
+  const [endFilter, setEndFilter] = useState("");
 
   useEffect(() => {
     if (!user) return;
 
-    const fetchSubscription = async () => {
+    const fetchLatest = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/latest/${user.id}`);
         const data = await res.json();
-
-        if (data?.state === "rechazado") {
-          localStorage.setItem("subscriptionRejected", "true");
-        }
-
-        setSubscription(data || null);
-
-        if (data?.state === "aprobado") {
-          localStorage.setItem("hasActiveSubscription", "true");
-          localStorage.removeItem("selectedMembership");
-          setSelectedPlan(null);
-        } else {
-          localStorage.removeItem("hasActiveSubscription");
-        }
-      } catch (error) {
-        console.error("Error al cargar suscripción:", error);
-        setSubscription(null);
+        setLatest(data || null);
+      } catch (err) {
+        console.error("Error al obtener última suscripción:", err);
       }
     };
 
-    const wasRejected = localStorage.getItem("subscriptionRejected");
-    if (wasRejected === "true") {
-      setTimeout(() => setShowRejectedDialog(true), 500);
-      localStorage.removeItem("subscriptionRejected");
-    }
-
-    const fetchQr = async () => {
+    const fetchAllSubscriptions = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qrs`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/history/${user.id}`);
         const data = await res.json();
-        setQrImage(data.image || null);
-      } catch (error) {
-        console.error("Error al cargar QR:", error);
-        setQrImage(null);
+        const safeData = Array.isArray(data) ? data : [];
+        setSubscriptions(safeData);
+        setFiltered(safeData);
+      } catch (err) {
+        console.error("Error al obtener historial:", err);
       }
     };
 
-    const fetchSelectedPlan = () => {
-      try {
-        const stored = localStorage.getItem("selectedMembership");
-        if (stored) {
-          const parsed: Membership = JSON.parse(stored);
-          setSelectedPlan(parsed);
-        }
-      } catch (error) {
-        console.error("Error al leer plan seleccionado:", error);
-      }
-    };
-
-    fetchSelectedPlan();
-    if (user) {
-      fetchSubscription();
-      fetchQr();
-    }
-
+    fetchLatest();
+    fetchAllSubscriptions();
   }, [user]);
 
-  const handleUpload = async () => {
-    if (!proofFile || !selectedPlan) return;
+  const applyFilter = () => {
+    const start = startFilter ? new Date(startFilter) : null;
+    const end = endFilter ? new Date(endFilter) : null;
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
+    const result = subscriptions.filter(sub => {
+      const subStart = new Date(sub.start_date);
+      if (start && subStart < start) return false;
+      if (end && subStart > end) return false;
+      return true;
+    });
 
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user?.id,
-            membershipId: selectedPlan.id,
-            proofFile: base64,
-          }),
-        });
-
-        if (!res.ok) throw new Error("Error al enviar suscripción");
-
-        toast.success("Comprobante enviado correctamente. Estado en espera de aprobación.");
-        setProofFile(null);
-        setProofSent(true);
-        localStorage.removeItem("selectedMembership");
-        setSelectedPlan(null);
-
-        const refresh = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user?.id}`);
-        const newSub = await refresh.json();
-        setSubscription(newSub || null);
-      } catch (error) {
-        console.error("Error al enviar comprobante:", error);
-        toast.error("Error al enviar el comprobante");
-      }
-    };
-
-    reader.readAsDataURL(proofFile);
+    setFiltered(result);
   };
 
-  const confirmCancelSelection = () => {
-    localStorage.removeItem("selectedMembership");
-    setSelectedPlan(null);
-    setProofFile(null);
-    toast.success("Redirigiendo a la página principal...");
-    setTimeout(() => router.push("/client"), 1500);
+  const resetFilters = () => {
+    setStartFilter("");
+    setEndFilter("");
+    setFiltered(subscriptions);
   };
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
@@ -166,160 +101,115 @@ export default function MembershipStatusPage() {
   }
 
   return (
-      <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
-        <ClientSidebar />
+    <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
+      <ClientSidebar />
+      <div className="flex-1">
+        <h1 className="text-2xl font-bold mb-4">Estado de suscripción</h1>
 
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold mb-4">Estado de suscripción</h1>
+        {latest ? (
+          <div className="mb-8 bg-card border-l-4 border-primary p-4 rounded-lg">
+            <h2 className="text-xl font-semibold mb-2">Tu última suscripción</h2>
+            <p className="text-muted-foreground mb-1">
+              Estado: <strong>{latest.state}</strong>
+            </p>
+            <p>Inicio: {new Date(latest.start_date).toLocaleDateString()}</p>
+            <p>Fin: {new Date(latest.end_date).toLocaleDateString()}</p>
 
-          {!subscription ? (
-            <div className="text-muted-foreground">
-              {selectedPlan ? (
-                <>
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="font-semibold text-lg text-foreground">
-                      Estás a punto de unirte al plan{" "}
-                      <span className="text-primary">{selectedPlan.name}</span>
-                    </h2>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setConfirmCancelOpen(true)}
-                      disabled={proofSent}
-                    >
-                      Cancelar selección
-                    </Button>
-                  </div>
-
-                  {qrImage && (
-                    <div className="mb-6">
-                      <p className="text-muted-foreground mb-2">
-                        Realiza tu pago escaneando este QR:
-                      </p>
-                      <button onClick={() => setIsQRModalOpen(true)}>
-                        <Image
-                          src={qrImage}
-                          alt="Código QR de pago"
-                          width={256}
-                          height={256}
-                          className="rounded-md cursor-pointer hover:scale-105 transition-transform"
-                        />
-                      </button>
-                    </div>
-                  )}
-
-                  {proofSent ? (
-                    <div className="bg-green-100 border border-green-300 p-4 rounded-md text-green-800">
-                      <p>Tu comprobante fue enviado. Espera a que un empleado lo apruebe para activar tu suscripción.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mb-4">
-                        <label className="block font-medium mb-1">Sube tu comprobante de pago:</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                        />
-                      </div>
-
-                      <Button onClick={handleUpload} disabled={!proofFile}>
-                        Enviar comprobante
-                      </Button>
-                    </>
-                  )}
-                </>
+            <div className="mt-3">
+              <h3 className="font-medium">{latest.membership.name}</h3>
+              <p><strong>Duración:</strong> {latest.membership.duration}</p>
+              {latest.membership.price_before_discount && latest.membership.price_before_discount > latest.membership.price ? (
+                <p>
+                  <strong>Precio:</strong>{" "}
+                  <span className="line-through text-muted-foreground mr-2">
+                    Bs. {latest.membership.price_before_discount}
+                  </span>
+                  <span className="text-primary font-semibold">Bs. {latest.membership.price}</span>
+                  <span className="ml-2 text-green-500" title="¡Descuento activo!">🎁</span>
+                </p>
               ) : (
-                <p className="text-muted-foreground">No tienes ninguna suscripción ni plan seleccionado.</p>
+                <p><strong>Precio:</strong> Bs. {latest.membership.price}</p>
               )}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <p className="text-muted-foreground">
-                  Estado: <strong>{subscription.state}</strong>
-                </p>
-                <p>Inicio: {new Date(subscription.start_date).toLocaleDateString()}</p>
-                <p>Fin: {new Date(subscription.end_date).toLocaleDateString()}</p>
-              </div>
 
-              <div className="bg-card border rounded-lg p-4">
-                <h2 className="font-semibold mb-2">{subscription.membership.name}</h2>
-                <p><strong>Duración:</strong> {subscription.membership.duration}</p>
-                <p><strong>Precio:</strong> Bs. {subscription.membership.price}</p>
-              </div>
+            {/* Botones dinámicos */}
+            <div className="mt-4 flex gap-3">
+              {latest.state === "vencido" && (
+                <Button onClick={() => router.push(`/memberships/${latest.membership.id}`)}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Renovar suscripción
+                </Button>
+              )}
+              {latest.state === "rechazado" && (
+                <Button onClick={() => router.push("/memberships")}>
+                  <PackageOpen className="mr-2 h-4 w-4" />
+                  Ir a planes de membresía
+                </Button>
+              )}
             </div>
-          )}
+          </div>
+        ) : (
+          <p className="mb-8 text-muted-foreground">Aún no tienes ninguna suscripción.</p>
+        )}
+
+        <Separator className="my-6" />
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 items-end">
+          <div>
+            <label className="text-sm">Desde:</label>
+            <input
+              type="date"
+              className="block border rounded-md px-2 py-1 mt-1"
+              value={startFilter}
+              onChange={(e) => setStartFilter(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm">Hasta:</label>
+            <input
+              type="date"
+              className="block border rounded-md px-2 py-1 mt-1"
+              value={endFilter}
+              onChange={(e) => setEndFilter(e.target.value)}
+            />
+          </div>
+          <Button onClick={applyFilter}>Filtrar</Button>
+          <Button variant="outline" onClick={resetFilters}>Refrescar</Button>
         </div>
 
-        {/* Modal de confirmación de cancelación */}
-        <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>¿Cancelar selección de plan?</DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground mb-4">
-              Se eliminará el plan seleccionado y volverás al inicio.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setConfirmCancelOpen(false)}>
-                No
-              </Button>
-              <Button variant="destructive" onClick={confirmCancelSelection}>
-                Sí, cancelar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* 🆕 Modal para ver el QR en pantalla completa */}
-        <Dialog open={isQRModalOpen} onOpenChange={setIsQRModalOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>QR de pago</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center">
-              {qrImage && (
-                <Image
-                  src={qrImage}
-                  alt="QR ampliado"
-                  width={512}
-                  height={512}
-                  className="rounded-md max-w-full h-auto"
-                />
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* 🆕 Dialog de suscripción rechazada */}
-        <Dialog open={showRejectedDialog} onOpenChange={setShowRejectedDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Solicitud rechazada</DialogTitle>
-            </DialogHeader>
-            <div className="text-sm text-muted-foreground space-y-4">
-              <p>
-                Tu solicitud de suscripción fue <span className="font-semibold text-destructive">rechazada</span> por un administrador o empleado del gimnasio.
+        {filtered.length > 0 ? (
+          filtered.map((sub, idx) => (
+            <div key={sub.id} className="mb-6">
+              <p className="text-muted-foreground mb-1">
+                Estado: <strong>{sub.state}</strong>
               </p>
-              <p>
-                Es posible que el comprobante enviado no haya sido válido, esté incompleto o no cumpla con los requisitos. Te recomendamos contactar con el administrador o personal del gimnasio para recibir más información.
-              </p>
+              <p>Inicio: {new Date(sub.start_date).toLocaleDateString()}</p>
+              <p>Fin: {new Date(sub.end_date).toLocaleDateString()}</p>
+
+              <div className="bg-card border rounded-lg p-4 mt-2">
+                <h2 className="font-semibold mb-2">{sub.membership.name}</h2>
+                <p><strong>Duración:</strong> {sub.membership.duration}</p>
+                {sub.membership.price_before_discount && sub.membership.price_before_discount > sub.membership.price ? (
+                  <p>
+                    <strong>Precio:</strong>{" "}
+                    <span className="line-through text-muted-foreground mr-2">
+                      Bs. {sub.membership.price_before_discount}
+                    </span>
+                    <span className="text-primary font-semibold">Bs. {sub.membership.price}</span>
+                    <span className="ml-2 text-green-500" title="¡Descuento activo!">🎁</span>
+                  </p>
+                ) : (
+                  <p><strong>Precio:</strong> Bs. {sub.membership.price}</p>
+                )}
+              </div>
+
+              {idx < filtered.length - 1 && <Separator className="my-6" />}
             </div>
-            <div className="flex justify-end mt-4">
-              <Button
-                onClick={() => {
-                  setShowRejectedDialog(false);
-                  setSubscription(null);
-                  localStorage.removeItem("selectedMembership");
-                  setSelectedPlan(null);
-                }}
-              >
-                Aceptar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </main>
-    );
-  }
+          ))
+        ) : (
+          <p className="text-muted-foreground">No hay suscripciones registradas.</p>
+        )}
+      </div>
+    </main>
+  );
+}

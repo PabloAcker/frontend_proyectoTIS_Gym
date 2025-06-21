@@ -12,12 +12,14 @@ import {
   UserCog,
   LogOut,
   MoreHorizontal,
+  BellIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -33,9 +35,10 @@ import {
 export function ClientNavbar() {
   const router = useRouter();
 
-  type User = { name: string };
+  type User = { id: number; name: string };
   const [user, setUser] = useState<User | null>(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [notifications, setNotifications] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -43,7 +46,6 @@ export function ClientNavbar() {
     const token = localStorage.getItem("token");
 
     if (!storedUser || !token) {
-      // Si falta uno de los dos, limpiamos todo
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       setUser(null);
@@ -51,6 +53,7 @@ export function ClientNavbar() {
       try {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
+        fetchNotifications(parsed.id);
       } catch (e) {
         console.error("Error al parsear usuario:", e);
         localStorage.removeItem("user");
@@ -59,9 +62,26 @@ export function ClientNavbar() {
       }
     }
 
-    // Se marca montado al final para prevenir render anticipado
     setIsMounted(true);
   }, []);
+
+  const fetchNotifications = async (userId: number) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${userId}`);
+      const data = await res.json();
+
+      // Validar que sea un array de objetos con mensajes
+      if (Array.isArray(data)) {
+        const messages = data.map((item) => item.message);
+        setNotifications(messages);
+      } else {
+        setNotifications([]);
+      }
+    } catch (err) {
+      console.error("Error al cargar notificaciones:", err);
+      setNotifications([]);
+    }
+  };
 
   const confirmLogout = () => {
     localStorage.removeItem("user");
@@ -116,6 +136,33 @@ export function ClientNavbar() {
                 Dietas y rutinas
               </Button>
 
+              {/* 🔔 Campana de notificaciones */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative p-2">
+                    <BellIcon className="w-5 h-5" />
+                    {notifications.length > 0 && (
+                      <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+                  {notifications.length === 0 ? (
+                    <DropdownMenuItem className="text-sm text-muted-foreground">
+                      No tienes notificaciones.
+                    </DropdownMenuItem>
+                  ) : (
+                    notifications.map((msg, index) => (
+                      <DropdownMenuItem key={index} className="text-sm">
+                        {msg}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Menú Más */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">

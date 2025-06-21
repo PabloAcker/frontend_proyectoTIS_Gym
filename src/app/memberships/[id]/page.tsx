@@ -13,6 +13,7 @@ interface Membership {
   description: string;
   duration: string;
   price: number;
+  price_before_discount?: number;
 }
 
 export default function MembershipDetailPage() {
@@ -35,13 +36,40 @@ export default function MembershipDetailPage() {
       }
     };
 
+    const checkSubscription = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!user || !user.id) return;
+
+        setIsLoggedIn(true);
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/user/${user.id}`);
+        const subscription = await res.json();
+
+        if (!subscription || !subscription.state) {
+          setHasActiveSubscription(false);
+          return;
+        }
+
+        const estado = subscription.state.toLowerCase(); // 👈 campo correcto
+        const esActiva = estado === "pendiente" || estado === "aprobado";
+
+        setHasActiveSubscription(esActiva);
+
+        if (estado === "rechazado") {
+          toast.warning("Tu última suscripción fue rechazada. Puedes elegir otro plan.");
+        } else if (estado === "vencido") {
+          toast.info("Tu suscripción ha vencido. Puedes renovar el plan.");
+        }
+
+      } catch (error) {
+        console.error("Error al verificar suscripción:", error);
+        setHasActiveSubscription(false);
+      }
+    };
+
     fetchMembership();
-
-    const user = localStorage.getItem("user");
-    setIsLoggedIn(!!user);
-
-    const active = localStorage.getItem("hasActiveSubscription");
-    setHasActiveSubscription(active === "true");
+    checkSubscription();
   }, [id]);
 
   const handleChoosePlan = () => {
@@ -62,8 +90,8 @@ export default function MembershipDetailPage() {
     setLoading(true);
 
     setTimeout(() => {
-      router.push("/client/membership-status");
-    }, 2000);
+      router.push("/client/membership-status-pay");
+    }, 6000);
   };
 
   if (!membership) {
@@ -126,7 +154,7 @@ export default function MembershipDetailPage() {
       {isAnnual && (
         <>
           <p className="mb-4 text-lg leading-relaxed text-muted-foreground">
-            <strong>Plan Anual:</strong> Quieres sacarle el máximo provecho al gimnasio todo el año? ...
+            <strong>Plan Anual:</strong> ¿Quieres sacarle el máximo provecho al gimnasio todo el año? ...
           </p>
           <ul className="mb-6 list-disc list-inside space-y-2 text-foreground">
             <li>✅ Acceso ilimitado todo el año.</li>
@@ -144,9 +172,22 @@ export default function MembershipDetailPage() {
       <p className="mb-2">
         <strong>Duración:</strong> {membership.duration}
       </p>
-      <p className="mb-6">
-        <strong>Precio:</strong> Bs. {membership.price}
-      </p>
+      <div className="mb-6">
+        {membership.price_before_discount && membership.price_before_discount > membership.price ? (
+          <p>
+            <strong>Precio:</strong>{" "}
+            <span className="line-through text-muted-foreground mr-2">
+              Bs. {membership.price_before_discount}
+            </span>
+            <span className="text-primary font-semibold">Bs. {membership.price}</span>
+            <span className="ml-2 text-green-500" title="¡Descuento activo!">🎁</span>
+          </p>
+        ) : (
+          <p>
+            <strong>Precio:</strong> Bs. {membership.price}
+          </p>
+        )}
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
         {isLoggedIn && (
@@ -167,7 +208,6 @@ export default function MembershipDetailPage() {
         </Button>
       </div>
 
-      {/* 🆕 Dialog informativo si ya tiene plan */}
       <Dialog open={showAlreadySubscribedDialog} onOpenChange={setShowAlreadySubscribedDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>

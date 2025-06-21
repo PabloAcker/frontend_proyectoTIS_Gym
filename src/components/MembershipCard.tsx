@@ -10,6 +10,7 @@ interface Membership {
   description: string;
   duration: string;
   price: number;
+  price_before_discount?: number;
 }
 
 export const MembershipCard = ({
@@ -38,9 +39,24 @@ export const MembershipCard = ({
         />
         <h3 className="text-xl font-bold text-foreground">{membership.name}</h3>
         <div className="text-sm text-foreground">
-          <p>
-            <strong>Precio:</strong> Bs. {membership.price}
-          </p>
+          <div>
+            {membership.price_before_discount && membership.price_before_discount > membership.price ? (
+              <p className="text-sm text-foreground">
+                <strong>Precio: </strong>
+                <span className="line-through text-muted-foreground mr-2">
+                  Bs. {membership.price_before_discount}
+                </span>
+                <span className="text-primary font-semibold">Bs. {membership.price}</span>
+                <span className="ml-2 text-green-500" title="¡Precio con descuento!">
+                  🎁
+                </span>
+              </p>
+            ) : (
+              <p>
+                <strong>Precio:</strong> Bs. {membership.price}
+              </p>
+            )}
+          </div>
         </div>
 
         <Link href={`/memberships/${membership.id}`}>

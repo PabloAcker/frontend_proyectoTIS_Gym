@@ -36,6 +36,7 @@ interface Subscription {
     name: string;
     duration: string;
     price: number;
+    price_before_discount?: number;
   };
   user: {
     name: string;
@@ -198,7 +199,19 @@ const handleRFIDRegister = async () => {
                 <td className="p-2 border">{s.user.email}</td>
                 <td className="p-2 border">{s.membership.name}</td>
                 <td className="p-2 border">{s.membership.duration}</td>
-                <td className="p-2 border">Bs. {s.membership.price}</td>
+                <td className="p-2 border">
+                  {s.membership.price_before_discount && s.membership.price_before_discount > s.membership.price ? (
+                    <>
+                      <span className="line-through text-muted-foreground mr-1">
+                        Bs. {s.membership.price_before_discount}
+                      </span>
+                      <span className="text-green-600 font-semibold">Bs. {s.membership.price}</span>
+                      <span className="ml-1" title="Precio con descuento">🎁</span>
+                    </>
+                  ) : (
+                    <>Bs. {s.membership.price}</>
+                  )}
+                </td>
                 <td className="p-2 border">
                   {s.proof_file ? (
                     <a href={s.proof_file} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
