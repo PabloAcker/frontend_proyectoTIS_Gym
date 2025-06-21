@@ -95,9 +95,12 @@ export default function AdminSubscriptionsPage() {
         : `/subscriptions/${selectedSubId}/reject`;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-        method: "PUT",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+        {
+          method: "PUT",
+        }
+      );
 
       const text = await res.text();
       if (!res.ok) throw new Error(`Error ${res.status}: ${text}`);

@@ -18,6 +18,8 @@ export default function MembershipsPage() {
   const [isLoadingMemberships, setIsLoadingMemberships] = useState(true);
   const [error, setError] = useState("");
 
+  const [notifications, setNotifications] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -34,6 +36,20 @@ export default function MembershipsPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return;
+    const user = JSON.parse(storedUser);
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${user.id}`)
+      .then((res) => res.json())
+      .then((data) => setNotifications(data))
+      .catch((err) => {
+        console.error("Error al cargar notificaciones:", err);
+        setNotifications([]);
+      });
+  }, []);
+
   return (
     <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
       <ClientSidebar />
@@ -48,7 +64,11 @@ export default function MembershipsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {memberships.map((m) => (
-            <MembershipCard key={m.id} membership={m} />
+            <MembershipCard
+              key={m.id}
+              membership={m}
+              notifications={notifications}
+            />
           ))}
         </div>
       </div>

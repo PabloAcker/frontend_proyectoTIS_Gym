@@ -39,6 +39,7 @@ export function ClientNavbar() {
   const [user, setUser] = useState<User | null>(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -70,16 +71,20 @@ export function ClientNavbar() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${userId}`);
       const data = await res.json();
 
-      // Validar que sea un array de objetos con mensajes
       if (Array.isArray(data)) {
         const messages = data.map((item) => item.message);
         setNotifications(messages);
+        if (messages.length > 0) {
+          setHasNewNotifications(true);
+        }
       } else {
         setNotifications([]);
+        setHasNewNotifications(false);
       }
     } catch (err) {
       console.error("Error al cargar notificaciones:", err);
       setNotifications([]);
+      setHasNewNotifications(false);
     }
   };
 
@@ -95,7 +100,6 @@ export function ClientNavbar() {
   return (
     <>
       <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-background/20 border-b border-border shadow-sm px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
         <div className="flex items-center gap-3 ml-12">
           <Image
             src="/images/logo-gym.png"
@@ -107,41 +111,30 @@ export function ClientNavbar() {
           <span className="font-bold text-xl text-black">E-GYM</span>
         </div>
 
-        {/* Navegación */}
         <div className="flex items-center gap-4 mr-10">
           {user ? (
             <>
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/memberships")}
-                className="flex items-center gap-2"
-              >
+              <Button variant="ghost" onClick={() => router.push("/memberships")} className="flex items-center gap-2">
                 <Layers className="w-4 h-4" />
                 Planes de membresía
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/client/branches")}
-                className="flex items-center gap-2"
-              >
+              <Button variant="ghost" onClick={() => router.push("/client/branches")} className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Sucursales
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/client/chatbot")}
-                className="flex items-center gap-2"
-              >
+              <Button variant="ghost" onClick={() => router.push("/client/chatbot")} className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 Dietas y rutinas
               </Button>
 
               {/* 🔔 Campana de notificaciones */}
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={(open) => {
+                if (open) setHasNewNotifications(false);
+              }}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative p-2">
                     <BellIcon className="w-5 h-5" />
-                    {notifications.length > 0 && (
+                    {hasNewNotifications && (
                       <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500 animate-ping" />
                     )}
                   </Button>
@@ -171,9 +164,7 @@ export function ClientNavbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => router.push("/client/membership-status")}
-                  >
+                  <DropdownMenuItem onClick={() => router.push("/client/membership-status")}>
                     <ClipboardList className="w-4 h-4 mr-2" />
                     Estado de suscripción
                   </DropdownMenuItem>
@@ -184,11 +175,7 @@ export function ClientNavbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button
-                variant="ghost"
-                onClick={() => setLogoutDialogOpen(true)}
-                className="flex items-center gap-2"
-              >
+              <Button variant="ghost" onClick={() => setLogoutDialogOpen(true)} className="flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
                 Cerrar sesión - {user.name}
               </Button>

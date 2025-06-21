@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Gift } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,13 +11,20 @@ interface Membership {
   description: string;
   duration: string;
   price: number;
-  price_before_discount?: number;
+}
+
+interface Notification {
+  type: "mensual" | "trimestral" | "anual";
+  discount: number;
+  message: string;
 }
 
 export const MembershipCard = ({
   membership,
+  notifications = [],
 }: {
   membership: Membership;
+  notifications?: Notification[];
   hideDescription?: boolean;
 }) => {
   const getImagePath = (name: string) => {
@@ -26,6 +34,24 @@ export const MembershipCard = ({
     if (key.includes("anual")) return "/images/plan_anual.jpg";
     return "/images/cardMembership.png";
   };
+
+  // Convertir duración a tipo de notificación para comparar
+  const mapDurationToType = (duration: string): "mensual" | "trimestral" | "anual" | null => {
+    const d = duration.toLowerCase();
+    if (d.includes("1 mes")) return "mensual";
+    if (d.includes("3 meses")) return "trimestral";
+    if (d.includes("12 meses")) return "anual";
+    return null;
+  };
+
+  const planType = mapDurationToType(membership.duration);
+
+  // Buscar una notificación que coincida exactamente con el tipo
+  const discountNotification = notifications.find((n) => n.type === planType);
+
+  const discountedPrice = discountNotification
+    ? membership.price * (1 - discountNotification.discount / 100)
+    : null;
 
   return (
     <div className="bg-card p-4 rounded-xl shadow-md border border-border">
@@ -38,25 +64,26 @@ export const MembershipCard = ({
           className="rounded-md object-cover w-full h-48"
         />
         <h3 className="text-xl font-bold text-foreground">{membership.name}</h3>
+
         <div className="text-sm text-foreground">
-          <div>
-            {membership.price_before_discount && membership.price_before_discount > membership.price ? (
-              <p className="text-sm text-foreground">
-                <strong>Precio: </strong>
-                <span className="line-through text-muted-foreground mr-2">
-                  Bs. {membership.price_before_discount}
+          {discountNotification ? (
+            <p className="text-sm flex items-center gap-2">
+              <strong>Precio: </strong>
+              <span className="line-through text-muted-foreground">
+                Bs. {membership.price.toFixed(2)}
+              </span>
+              <span className="text-primary font-semibold flex items-center gap-1">
+                Bs. {(discountedPrice ?? membership.price).toFixed(2)}
+                <span title="¡Precio con descuento!">
+                  <Gift className="w-4 h-4 text-primary" />
                 </span>
-                <span className="text-primary font-semibold">Bs. {membership.price}</span>
-                <span className="ml-2 text-green-500" title="¡Precio con descuento!">
-                  🎁
-                </span>
-              </p>
-            ) : (
-              <p>
-                <strong>Precio:</strong> Bs. {membership.price}
-              </p>
-            )}
-          </div>
+              </span>
+            </p>
+          ) : (
+            <p>
+              <strong>Precio:</strong> Bs. {membership.price.toFixed(2)}
+            </p>
+          )}
         </div>
 
         <Link href={`/memberships/${membership.id}`}>

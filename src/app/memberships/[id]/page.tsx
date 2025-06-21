@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Gift } from "lucide-react";
 
 interface Membership {
   id: number;
@@ -13,7 +14,7 @@ interface Membership {
   description: string;
   duration: string;
   price: number;
-  price_before_discount?: number;
+  discounted_price?: number;
 }
 
 export default function MembershipDetailPage() {
@@ -28,7 +29,9 @@ export default function MembershipDetailPage() {
   useEffect(() => {
     const fetchMembership = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/memberships/${id}`);
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userIdParam = user?.id ? `?userId=${user.id}` : "";
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/memberships/${id}${userIdParam}`);
         const data = await res.json();
         setMembership(data);
       } catch (error) {
@@ -51,7 +54,7 @@ export default function MembershipDetailPage() {
           return;
         }
 
-        const estado = subscription.state.toLowerCase(); // 👈 campo correcto
+        const estado = subscription.state.toLowerCase();
         const esActiva = estado === "pendiente" || estado === "aprobado";
 
         setHasActiveSubscription(esActiva);
@@ -61,7 +64,6 @@ export default function MembershipDetailPage() {
         } else if (estado === "vencido") {
           toast.info("Tu suscripción ha vencido. Puedes renovar el plan.");
         }
-
       } catch (error) {
         console.error("Error al verificar suscripción:", error);
         setHasActiveSubscription(false);
@@ -81,7 +83,17 @@ export default function MembershipDetailPage() {
     if (!membership) return;
 
     try {
-      localStorage.setItem("selectedMembership", JSON.stringify(membership));
+      const selected = {
+        id: membership.id,
+        name: membership.name,
+        description: membership.description,
+        duration: membership.duration,
+        price: membership.discounted_price ?? membership.price,
+        price_before_discount: membership.discounted_price ? membership.price : undefined,
+      };
+
+      localStorage.setItem("selectedMembership", JSON.stringify(selected));
+
     } catch (error) {
       console.error("Error al guardar plan en localStorage:", error);
     }
@@ -91,7 +103,7 @@ export default function MembershipDetailPage() {
 
     setTimeout(() => {
       router.push("/client/membership-status-pay");
-    }, 6000);
+    }, 4000);
   };
 
   if (!membership) {
@@ -102,6 +114,7 @@ export default function MembershipDetailPage() {
   const isMonthly = name.includes("mensual");
   const isQuarterly = name.includes("trimestral");
   const isAnnual = name.includes("anual");
+
 
   return (
     <main className="p-6 max-w-2xl mx-auto bg-background text-foreground">
@@ -126,7 +139,9 @@ export default function MembershipDetailPage() {
       {isMonthly && (
         <>
           <p className="mb-4 text-lg leading-relaxed text-muted-foreground">
-            <strong>Plan Mensual:</strong> ¿Estás comenzando tu camino hacia una vida más activa o simplemente necesitas una opción flexible para tu rutina? ...
+            <strong>Plan Mensual:</strong> ¿Estás comenzando tu camino hacia una vida más activa o simplemente necesitas una opción flexible para tu rutina? Nuestro Plan Mensual está diseñado para brindarte acceso al gimnasio durante 30 días consecutivos, permitiéndote ingresar una vez al día y acceder a todas las zonas estándar de tu sucursal (zona de musculación, cardio, máquinas y vestuarios).
+            
+            Este plan es perfecto para quienes desean probar el servicio, adaptarse al ritmo del gimnasio o tienen una agenda cambiante. Es ideal si quieres entrenar con libertad y sin ataduras a largo plazo, pagando solo por el tiempo que realmente usarás.
           </p>
           <ul className="mb-6 list-disc list-inside space-y-2 text-foreground">
             <li>✅ Ingreso una vez al día durante 30 días.</li>
@@ -140,12 +155,16 @@ export default function MembershipDetailPage() {
       {isQuarterly && (
         <>
           <p className="mb-4 text-lg leading-relaxed text-muted-foreground">
-            <strong>Plan Trimestral:</strong> Pensado para quienes buscan consistencia en su entrenamiento...
+            <strong>Plan Trimestral:</strong> Pensado para quienes buscan consistencia en su entrenamiento sin preocuparse por renovaciones mensuales, el Plan Trimestral te brinda acceso ilimitado al gimnasio durante tres meses completos, con la posibilidad de ingresar las veces que desees cada día, sin restricciones de horario.
+
+            Mantendrás el mismo acceso que en el plan mensual, es decir, a todas las zonas estándar (cardio, pesas, máquinas, etc.), en cualquiera de nuestras sucursales habilitadas.
+
+            Esta opción es ideal para quienes ya han adoptado un ritmo constante de entrenamiento y desean ahorrar respecto al pago mensual.
           </p>
           <ul className="mb-6 list-disc list-inside space-y-2 text-foreground">
             <li>✅ Acceso ilimitado al día por 90 días consecutivos.</li>
-            <li>⚠️ No incluye zonas VIP.</li>
-            <li>🧠 Consejo: Perfecto si entrenás más de 3 veces por semana.</li>
+            <li>⚠️ No incluye zonas VIP (zumba, sauna, pentágono, etc.).</li>
+            <li>🧠 Consejo: Perfecto si entrenás más de 3 veces por semana y te interesa mantener una rutina sólida.</li>
             <li>👨‍🏫 Asistencia básica de instructores.</li>
           </ul>
         </>
@@ -154,11 +173,15 @@ export default function MembershipDetailPage() {
       {isAnnual && (
         <>
           <p className="mb-4 text-lg leading-relaxed text-muted-foreground">
-            <strong>Plan Anual:</strong> ¿Quieres sacarle el máximo provecho al gimnasio todo el año? ...
+            <strong>Plan Anual:</strong> Quieres sacarle el máximo provecho al gimnasio todo el año? El Plan Anual es la opción más completa y conveniente. Te brinda acceso total todos los días del año, con ingresos ilimitados por día y entrada libre a todas las zonas estándar y VIP de cada sucursal.
+
+            Disfruta de experiencias premium como clases de zumba, áreas de sauna, el pentágono de boxeo, y otras zonas especiales que varían según la sucursal. Este plan está hecho para verdaderos apasionados del fitness o para quienes valoran su bienestar como una prioridad.
+
+            Además, contarás con beneficios exclusivos, acceso prioritario a eventos y promociones, y todo sin preocuparte por renovaciones frecuentes.
           </p>
           <ul className="mb-6 list-disc list-inside space-y-2 text-foreground">
             <li>✅ Acceso ilimitado todo el año.</li>
-            <li>🎯 Ideal para atletas o quienes valoran su bienestar como prioridad.</li>
+            <li>🎯 Ideal para atletas, usuarios comprometidos o quienes desean aprovechar todas las ventajas del gimnasio.</li>
             <li>🧘 Acceso ilimitado a clases premium y zonas VIP.</li>
             <li>👨‍🏫 Asistencia personalizada de instructores.</li>
           </ul>
@@ -172,21 +195,33 @@ export default function MembershipDetailPage() {
       <p className="mb-2">
         <strong>Duración:</strong> {membership.duration}
       </p>
-      <div className="mb-6">
-        {membership.price_before_discount && membership.price_before_discount > membership.price ? (
-          <p>
-            <strong>Precio:</strong>{" "}
-            <span className="line-through text-muted-foreground mr-2">
-              Bs. {membership.price_before_discount}
+      <div className="mb-6 text-sm">
+        <strong>Precio:</strong>{" "}
+        {(() => {
+          const hasDiscount =
+            typeof membership.discounted_price === "number" &&
+            membership.discounted_price < membership.price;
+
+          if (hasDiscount) {
+            return (
+              <span className="flex items-center gap-2">
+                <span className="line-through text-muted-foreground">
+                  Bs. {membership.price.toFixed(2)}
+                </span>
+                <span className="text-primary font-semibold flex items-center gap-1">
+                  Bs. {(membership.discounted_price ?? membership.price).toFixed(2)}
+                  <Gift className="w-4 h-4 text-primary" aria-label="Precio con descuento" />
+                </span>
+              </span>
+            );
+          }
+
+          return (
+            <span className="text-primary font-semibold">
+              Bs. {membership.price.toFixed(2)}
             </span>
-            <span className="text-primary font-semibold">Bs. {membership.price}</span>
-            <span className="ml-2 text-green-500" title="¡Descuento activo!">🎁</span>
-          </p>
-        ) : (
-          <p>
-            <strong>Precio:</strong> Bs. {membership.price}
-          </p>
-        )}
+          );
+        })()}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">

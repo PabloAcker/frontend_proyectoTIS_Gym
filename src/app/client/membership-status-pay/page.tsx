@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
 import { toast } from "sonner";
+import { Gift } from "lucide-react";
 
 interface Membership {
   id: number;
@@ -77,7 +78,7 @@ export default function MembershipStatusPayPage() {
         localStorage.removeItem("selectedMembership");
         setSelectedPlan(null);
 
-        setTimeout(() => router.push("/client"), 2000);
+        setTimeout(() => router.push("/memberships"), 2000);
       } catch (error) {
         console.error("Error al subir comprobante:", error);
         toast.error("Hubo un error al subir el comprobante");
@@ -92,7 +93,7 @@ export default function MembershipStatusPayPage() {
     setSelectedPlan(null);
     setProofFile(null);
     toast.success("Selección cancelada");
-    setTimeout(() => router.push("/client"), 1500);
+    setTimeout(() => router.push("/memberships"), 1500);
   };
 
   if (loading) return <p className="p-6">Cargando...</p>;
@@ -107,24 +108,29 @@ export default function MembershipStatusPayPage() {
           <p className="text-muted-foreground">No se ha seleccionado ningún plan.</p>
         ) : (
           <>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-semibold text-lg text-foreground">
-                Plan seleccionado: <span className="text-primary">{selectedPlan.name}</span>
-              </h2>
-              {selectedPlan.price_before_discount && selectedPlan.price_before_discount > selectedPlan.price ? (
-                <p className="mt-2">
-                  <strong>Precio:</strong>{" "}
-                  <span className="line-through text-muted-foreground mr-2">
-                    Bs. {selectedPlan.price_before_discount}
-                  </span>
-                  <span className="text-primary font-semibold">Bs. {selectedPlan.price}</span>
-                  <span className="ml-2 text-green-500" title="¡Descuento aplicado!">🎁</span>
-                </p>
-              ) : (
-                <p className="mt-2">
-                  <strong>Precio:</strong> Bs. {selectedPlan.price}
-                </p>
-              )}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2 sm:gap-0">
+              <div>
+                <h2 className="font-semibold text-lg text-foreground">
+                  Plan seleccionado: <span className="text-primary">{selectedPlan.name}</span>
+                </h2>
+                {selectedPlan.price_before_discount &&
+                selectedPlan.price_before_discount > selectedPlan.price ? (
+                  <p className="mt-1 flex items-center flex-wrap gap-x-2">
+                    <strong>Precio:</strong>
+                    <span className="line-through text-muted-foreground">
+                      Bs. {selectedPlan.price_before_discount.toFixed(2)}
+                    </span>
+                    <span className="text-primary font-semibold">
+                      Bs. {selectedPlan.price.toFixed(2)}
+                    </span>
+                    <Gift className="w-4 h-4 text-primary" aria-label="¡Descuento aplicado!" />
+                  </p>
+                ) : (
+                  <p className="mt-1">
+                    <strong>Precio:</strong> Bs. {selectedPlan.price.toFixed(2)}
+                  </p>
+                )}
+              </div>
               <Button
                 variant="destructive"
                 size="sm"
