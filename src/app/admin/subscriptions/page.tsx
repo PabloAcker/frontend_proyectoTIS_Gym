@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Check, X, BadgePlus } from "lucide-react";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import { toast } from "sonner";
+import { Pagination } from "@/components/Pagination";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -60,6 +61,8 @@ export default function AdminSubscriptionsPage() {
   const [showRFIDDialog, setShowRFIDDialog] = useState(false);
   const [selectedRFIDSub, setSelectedRFIDSub] = useState<Subscription | null>(null);
   const [rfidCode, setRfidCode] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchSubscriptions = async () => {
     try {
@@ -156,6 +159,11 @@ const handleRFIDRegister = async () => {
   }
 };
 
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentSubscriptions = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
   if (unauthorized) return <UnauthorizedDialog />;
   if (loading) return <p className="p-6">Verificando acceso...</p>;
 
@@ -194,7 +202,7 @@ const handleRFIDRegister = async () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((s) => (
+            {currentSubscriptions.map((s) => (
               <tr key={s.id} className="border-t">
                 <td className="p-2 border">{s.user.name}</td>
                 <td className="p-2 border">{s.user.lastname}</td>
@@ -281,6 +289,16 @@ const handleRFIDRegister = async () => {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
 
       <AlertDialog
         open={!!selectedSubId && !!dialogAction}

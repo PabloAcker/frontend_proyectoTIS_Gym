@@ -8,6 +8,7 @@ import { Pencil, Plus } from "lucide-react";
 import { AdminTopNav } from "@/components/AdminTopNav";
 import { UserEditModal } from "@/components/UserEditModal";
 import { UserCreateModal } from "@/components/UserCreateModal";
+import { Pagination } from "@/components/Pagination"; // nuevo componente
 
 interface User {
   id: number;
@@ -28,6 +29,16 @@ export default function AdminUsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`);
@@ -45,16 +56,16 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     const lower = search.toLowerCase();
-    setFilteredUsers(
-      users
-        .filter((u) => u.name && u.lastname && u.email)
-        .filter(
-          (u) =>
-            u.name.toLowerCase().includes(lower) ||
-            u.lastname.toLowerCase().includes(lower) ||
-            u.email.toLowerCase().includes(lower)
-        )
-    );
+    const filtered = users
+      .filter((u) => u.name && u.lastname && u.email)
+      .filter(
+        (u) =>
+          u.name.toLowerCase().includes(lower) ||
+          u.lastname.toLowerCase().includes(lower) ||
+          u.email.toLowerCase().includes(lower)
+      );
+    setFilteredUsers(filtered);
+    setCurrentPage(1); // Reiniciar a la primera página si hay cambio en búsqueda
   }, [search, users]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
@@ -67,7 +78,7 @@ export default function AdminUsersPage() {
         <AdminTopNav />
       </div>
 
-      {/* Filtro y botón de acción en la misma fila */}
+      {/* Filtro y botón de acción */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <Input
           type="text"
@@ -83,7 +94,7 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-
+      {/* Tabla de usuarios */}
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300 text-sm">
           <thead className="bg-grayLight text-left">
@@ -95,7 +106,7 @@ export default function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((u) => (
+            {paginatedUsers.map((u) => (
               <tr key={u.id} className="border-t">
                 <td className="p-2 border">{u.name}</td>
                 <td className="p-2 border">{u.lastname}</td>
@@ -118,6 +129,16 @@ export default function AdminUsersPage() {
         </table>
       </div>
 
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      {/* Modales */}
       <UserEditModal
         user={selectedUser}
         open={isEditModalOpen}
@@ -128,7 +149,7 @@ export default function AdminUsersPage() {
           setIsEditModalOpen(false);
         }}
       />
-      
+
       <UserCreateModal
         open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

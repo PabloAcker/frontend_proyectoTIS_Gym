@@ -10,6 +10,7 @@ import { BranchEditModal } from "@/components/BranchEditModal";
 import { BranchCreateModal } from "@/components/BranchCreateModal";
 import { BranchViewModal } from "@/components/BranchViewModal";
 import { BranchImageModal } from "@/components/BranchImageModal";
+import { Pagination } from "@/components/Pagination";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -37,6 +38,8 @@ export default function AdminBranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [filteredBranches, setFilteredBranches] = useState<Branch[]>([]);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [branchToDelete, setBranchToDelete] = useState<Branch | null>(null);
@@ -73,6 +76,15 @@ export default function AdminBranchesPage() {
       )
     );
   }, [search, branches]);
+
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentBranches = filteredBranches.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredBranches.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleDeleteConfirmed = async () => {
     if (!branchToDelete) return;
@@ -130,7 +142,7 @@ export default function AdminBranchesPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredBranches.map((b) => (
+            {currentBranches.map((b) => (
               <tr key={b.id} className="border-t">
                 <td className="p-2 border">{b.name}</td>
                 <td className="p-2 border">{b.address}</td>
@@ -186,6 +198,13 @@ export default function AdminBranchesPage() {
             ))}
           </tbody>
         </table>
+        {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+        )}
       </div>
 
       <BranchEditModal

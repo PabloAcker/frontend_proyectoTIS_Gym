@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Plus } from "lucide-react";
 import { RfidScannerModal } from "@/components/RfidScannerModal";
+import { Pagination } from "@/components/Pagination";
 import type { DateRange } from "react-day-picker";
 
 interface RfidLog {
@@ -41,6 +42,9 @@ export default function AdminRFIDLogsPage() {
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [scannerOpen, setScannerOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchLogs = async () => {
     try {
@@ -86,7 +90,13 @@ export default function AdminRFIDLogsPage() {
     });
 
     setFiltered(filteredResults);
+    setCurrentPage(1);
   }, [search, logs, dateRange]);
+
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentLogs = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
   if (unauthorized) return <UnauthorizedDialog />;
   if (loading) return <p className="p-6">Verificando acceso...</p>;
@@ -158,7 +168,7 @@ export default function AdminRFIDLogsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((log) => (
+            {currentLogs.map((log) => (
               <tr key={log.id} className="border-t">
                 <td className="p-2 border">{log.id}</td>
                 <td className="p-2 border">{log.rfid_access.rfid_code}</td>
@@ -176,6 +186,15 @@ export default function AdminRFIDLogsPage() {
             ))}
           </tbody>
         </table>
+
+        {/* Paginación solo si hay más de una página */}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
 
       {/* Modal para escaneo RFID */}

@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus} from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { EmployeeEditModal } from "@/components/EmployeeEditModal";
 import { EmployeeCreateModal } from "@/components/EmployeeCreateModal";
 import { AdminTopNav } from "@/components/AdminTopNav";
+import { Pagination } from "@/components/Pagination"; // Importar el componente de paginación
 
 interface Employee {
   id: number;
@@ -26,6 +27,15 @@ export default function AdminEmployeesPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedEmployees = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const fetchEmployees = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/employees`);
@@ -43,27 +53,27 @@ export default function AdminEmployeesPage() {
 
   useEffect(() => {
     const lower = search.toLowerCase();
-    setFiltered(
-      employees.filter(
-        (e) =>
-          e.name.toLowerCase().includes(lower) ||
-          e.lastname.toLowerCase().includes(lower) ||
-          e.email.toLowerCase().includes(lower)
-      )
+    const filteredList = employees.filter(
+      (e) =>
+        e.name.toLowerCase().includes(lower) ||
+        e.lastname.toLowerCase().includes(lower) ||
+        e.email.toLowerCase().includes(lower)
     );
+    setFiltered(filteredList);
+    setCurrentPage(1); // Resetear a la primera página al filtrar
   }, [search, employees]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
 
   return (
     <main className="p-6 bg-background text-foreground min-h-screen">
-            {/* Nav superior y título */}
+      {/* Nav superior y título */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Gestión de Empleados</h1>
         <AdminTopNav />
       </div>
 
-      {/* Filtro y botón de acción en la misma fila */}
+      {/* Filtro y botón */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <Input
           type="text"
@@ -79,6 +89,7 @@ export default function AdminEmployeesPage() {
         </Button>
       </div>
 
+      {/* Tabla */}
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300 text-sm">
           <thead className="bg-grayLight text-left">
@@ -91,7 +102,7 @@ export default function AdminEmployeesPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((e) => (
+            {paginatedEmployees.map((e) => (
               <tr key={e.id} className="border-t">
                 <td className="p-2 border">{e.name}</td>
                 <td className="p-2 border">{e.lastname}</td>
@@ -115,6 +126,16 @@ export default function AdminEmployeesPage() {
         </table>
       </div>
 
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      {/* Modales */}
       <EmployeeEditModal
         employee={selected}
         open={editOpen}

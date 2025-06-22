@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BadgeCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { RfidRestrictionDialog } from "./RfidRestrictionDialog"; // ajusta la ruta si es necesario
 
 interface RfidScannerModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ export function RfidScannerModal({ open, onClose }: RfidScannerModalProps) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [restrictionOpen, setRestrictionOpen] = useState(false);
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -50,7 +52,11 @@ export function RfidScannerModal({ open, onClose }: RfidScannerModalProps) {
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "No se pudo registrar";
-      toast.error(errorMessage);
+      if (errorMessage.includes("una entrada diaria")) {
+        setRestrictionOpen(true); // abre el diálogo especial
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -99,6 +105,10 @@ export function RfidScannerModal({ open, onClose }: RfidScannerModalProps) {
           </Button>
         </div>
       </DialogContent>
+      <RfidRestrictionDialog
+        open={restrictionOpen}
+        onClose={() => setRestrictionOpen(false)}
+      />
     </Dialog>
   );
 }

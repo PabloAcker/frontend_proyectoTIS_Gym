@@ -9,6 +9,7 @@ import { ClientEditModal } from "@/components/ClientEditModal";
 import { ClientCreateModal } from "@/components/ClientCreateModal";
 import { ClientSubscriptionModal } from "@/components/ClientSubscriptionModal";
 import { AdminTopNav } from "@/components/AdminTopNav";
+import { Pagination } from "@/components/Pagination"; // Componente de paginación
 
 interface Client {
   id: number;
@@ -21,7 +22,7 @@ interface Client {
 }
 
 export default function AdminClientsPage() {
-  const {loading } = useAuth(["admin", "empleado"]);
+  const { loading } = useAuth(["admin", "empleado"]);
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -30,6 +31,15 @@ export default function AdminClientsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
+  const paginatedClients = filteredClients.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const fetchClients = async () => {
     try {
@@ -48,16 +58,16 @@ export default function AdminClientsPage() {
 
   useEffect(() => {
     const lower = search.toLowerCase();
-    setFilteredClients(
-      clients
-        .filter((c) => c && c.name && c.lastname && c.email)
-        .filter(
-          (c) =>
-            c.name.toLowerCase().includes(lower) ||
-            c.lastname.toLowerCase().includes(lower) ||
-            c.email.toLowerCase().includes(lower)
-        )
-    );
+    const filtered = clients
+      .filter((c) => c && c.name && c.lastname && c.email)
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(lower) ||
+          c.lastname.toLowerCase().includes(lower) ||
+          c.email.toLowerCase().includes(lower)
+      );
+    setFilteredClients(filtered);
+    setCurrentPage(1); // Reiniciar a la primera página al cambiar el filtro
   }, [search, clients]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
@@ -70,7 +80,7 @@ export default function AdminClientsPage() {
         <AdminTopNav />
       </div>
 
-      {/* Filtro y botón de acción en la misma fila */}
+      {/* Filtro y botón de acción */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <Input
           type="text"
@@ -86,6 +96,7 @@ export default function AdminClientsPage() {
         </Button>
       </div>
 
+      {/* Tabla */}
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300 text-sm">
           <thead className="bg-grayLight text-left">
@@ -100,12 +111,14 @@ export default function AdminClientsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredClients.map((c) => (
+            {paginatedClients.map((c) => (
               <tr key={c.id} className="border-t">
                 <td className="p-2 border">{c.ci}</td>
                 <td className="p-2 border">{c.name}</td>
                 <td className="p-2 border">{c.lastname}</td>
-                <td className="p-2 border">{new Date(c.birthdate).toLocaleDateString()}</td>
+                <td className="p-2 border">
+                  {new Date(c.birthdate).toLocaleDateString()}
+                </td>
                 <td className="p-2 border">{c.email}</td>
                 <td className="p-2 border">
                   <Button
@@ -137,6 +150,16 @@ export default function AdminClientsPage() {
         </table>
       </div>
 
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      {/* Modales */}
       <ClientEditModal
         client={selectedClient}
         open={isEditModalOpen}
