@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import { Button } from "./ui/button";
 import {
   Layers,
@@ -74,8 +75,12 @@ export function ClientNavbar() {
       if (Array.isArray(data)) {
         const messages = data.map((item) => item.message);
         setNotifications(messages);
-        if (messages.length > 0) {
+
+        const seen = Cookies.get("notifications_seen");
+        if (messages.length > 0 && !seen) {
           setHasNewNotifications(true);
+        } else {
+          setHasNewNotifications(false);
         }
       } else {
         setNotifications([]);
@@ -91,8 +96,14 @@ export function ClientNavbar() {
   const confirmLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.clear();
     setUser(null);
     router.push("/");
+  };
+
+  const handleNotificationOpen = () => {
+    Cookies.set("notifications_seen", "true", { expires: 7 });
+    setHasNewNotifications(false);
   };
 
   if (!isMounted) return null;
@@ -129,7 +140,7 @@ export function ClientNavbar() {
 
               {/* 🔔 Campana de notificaciones */}
               <DropdownMenu onOpenChange={(open) => {
-                if (open) setHasNewNotifications(false);
+                if (open) handleNotificationOpen();
               }}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative p-2">

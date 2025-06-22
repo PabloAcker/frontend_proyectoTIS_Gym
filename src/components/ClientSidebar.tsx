@@ -33,6 +33,7 @@ export function ClientSidebar() {
   const confirmLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.clear();
     router.push("/");
   };
 

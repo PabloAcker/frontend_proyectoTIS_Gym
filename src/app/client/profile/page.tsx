@@ -151,9 +151,10 @@ export default function ClientProfilePage() {
   };
 
   const handleLogout = () => {
+    setLogoutDialog(true);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    setLogoutDialog(true);
+    localStorage.clear();
     setTimeout(() => {
       router.push("/");
     }, 2000);

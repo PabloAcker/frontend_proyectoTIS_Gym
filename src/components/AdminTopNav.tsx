@@ -66,6 +66,7 @@ export function AdminTopNav() {
   const confirmLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.clear();
     window.location.href = "/";
   };
 
