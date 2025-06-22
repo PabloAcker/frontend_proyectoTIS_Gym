@@ -44,7 +44,9 @@ export function AdminTopNav() {
   const isActive = (path: string) => pathname === path;
 
   const routes = [
-    { label: "Panel", icon: <Home className="w-4 h-4 mr-2" />, href: "/admin" },
+    ...(user?.role === "admin"
+      ? [{ label: "Panel", icon: <Home className="w-4 h-4 mr-2" />, href: "/admin" }]
+      : []),
     { label: "Usuarios", icon: <UsersRound className="w-4 h-4 mr-2" />, href: "/admin/users" },
     { label: "Clientes", icon: <Users className="w-4 h-4 mr-2" />, href: "/admin/clients" },
     ...(user?.role === "admin"

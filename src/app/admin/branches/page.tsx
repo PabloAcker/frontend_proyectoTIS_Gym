@@ -11,6 +11,7 @@ import { BranchCreateModal } from "@/components/BranchCreateModal";
 import { BranchViewModal } from "@/components/BranchViewModal";
 import { BranchImageModal } from "@/components/BranchImageModal";
 import { Pagination } from "@/components/Pagination";
+import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -34,7 +35,7 @@ interface Branch {
 }
 
 export default function AdminBranchesPage() {
-  const { loading, user: currentUser } = useAuth(["admin", "empleado"]);
+  const { loading, user: currentUser, unauthorized } = useAuth(["admin", "empleado"]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [filteredBranches, setFilteredBranches] = useState<Branch[]>([]);
   const [search, setSearch] = useState("");
@@ -101,6 +102,7 @@ export default function AdminBranchesPage() {
   };
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
+  if (unauthorized) return <UnauthorizedDialog />;
 
   return (
     <main className="p-6 bg-background text-foreground min-h-screen">

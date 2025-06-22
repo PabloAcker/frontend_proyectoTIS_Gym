@@ -9,13 +9,14 @@ import { ClientsSubscriptionBarChart } from "@/components/Charts/ClientsSubscrip
 import { MembershipDistributionChart } from "@/components/Charts/MembershipDistributionChart";
 import { MonthlyEarningsLineChart } from "@/components/Charts/MonthlyEarningsLineChart";
 import { Button } from "@/components/ui/button";
+import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useEffect, useState } from "react";
 
 export default function AdminPage() {
-  const { user, loading } = useAuth(["admin", "empleado"]);
+  const { user, loading, unauthorized } = useAuth(["admin"]);
 
   const [tableData, setTableData] = useState<
     { month: string; subs: number; withSub: number; withoutSub: number; earnings: number }[]
@@ -121,6 +122,7 @@ export default function AdminPage() {
   };
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
+  if (unauthorized) return <UnauthorizedDialog />;
 
   return (
     <main className="p-6 min-h-screen bg-background text-foreground">

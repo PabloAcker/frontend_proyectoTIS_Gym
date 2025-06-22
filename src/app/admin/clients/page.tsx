@@ -9,7 +9,8 @@ import { ClientEditModal } from "@/components/ClientEditModal";
 import { ClientCreateModal } from "@/components/ClientCreateModal";
 import { ClientSubscriptionModal } from "@/components/ClientSubscriptionModal";
 import { AdminTopNav } from "@/components/AdminTopNav";
-import { Pagination } from "@/components/Pagination"; // Componente de paginación
+import { Pagination } from "@/components/Pagination"; 
+import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 
 interface Client {
   id: number;
@@ -22,7 +23,7 @@ interface Client {
 }
 
 export default function AdminClientsPage() {
-  const { loading } = useAuth(["admin", "empleado"]);
+  const { loading, unauthorized } = useAuth(["admin", "empleado"]);
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -71,6 +72,7 @@ export default function AdminClientsPage() {
   }, [search, clients]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
+  if (unauthorized) return <UnauthorizedDialog />;
 
   return (
     <main className="p-6 bg-background text-foreground min-h-screen">

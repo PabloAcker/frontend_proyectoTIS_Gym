@@ -53,12 +53,14 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (data.user.role === "admin" || data.user.role === "empleado") {
+      if (data.user.role === "admin") {
         router.push("/admin");
+      } else if (data.user.role === "empleado") {
+        router.push("/admin/rfid");
       } else if (data.user.role === "cliente") {
         router.push("/");
-      } else {
-        router.push("/client");
+      }  else {
+        router.push("/");
       }
     } catch (err) {
       if (err instanceof Error) {

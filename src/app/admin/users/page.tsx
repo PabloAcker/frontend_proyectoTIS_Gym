@@ -8,8 +8,8 @@ import { Pencil, Plus } from "lucide-react";
 import { AdminTopNav } from "@/components/AdminTopNav";
 import { UserEditModal } from "@/components/UserEditModal";
 import { UserCreateModal } from "@/components/UserCreateModal";
-import { Pagination } from "@/components/Pagination"; // nuevo componente
-
+import { Pagination } from "@/components/Pagination";
+import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 interface User {
   id: number;
   name: string;
@@ -21,7 +21,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
-  const { loading } = useAuth(["admin", "empleado"]);
+  const { loading, unauthorized } = useAuth(["admin", "empleado"]);
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
@@ -69,6 +69,7 @@ export default function AdminUsersPage() {
   }, [search, users]);
 
   if (loading) return <p className="p-6">Verificando acceso...</p>;
+  if (unauthorized) return <UnauthorizedDialog />;
 
   return (
     <main className="p-6 bg-background text-foreground min-h-screen">
