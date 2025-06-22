@@ -68,6 +68,31 @@ export function UserEditModal({ user, open, onClose, onSave }: Props) {
         ...(password ? { password } : {}),
       };
 
+      const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
+      if (!nameRegex.test(form.name)) {
+        toast.error("Nombre inválido. Solo letras y mínimo 2 caracteres.");
+        return;
+      }
+
+      if (!nameRegex.test(form.lastname)) {
+        toast.error("Apellido inválido. Solo letras y mínimo 2 caracteres.");
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email)) {
+        toast.error("Correo electrónico no válido.");
+        return;
+      }
+
+      if (password) {
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+        if (!passwordRegex.test(password)) {
+          toast.error("La contraseña debe tener al menos 8 caracteres, letras y números.");
+          return;
+        }
+      }
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -118,12 +143,14 @@ export function UserEditModal({ user, open, onClose, onSave }: Props) {
               value={form.name}
               onChange={handleChange}
               placeholder="Nombre"
+              maxLength={25}
             />
             <Input
               name="lastname"
               value={form.lastname}
               onChange={handleChange}
               placeholder="Apellido"
+              maxLength={25}
             />
             <Input
               name="email"
@@ -142,6 +169,7 @@ export function UserEditModal({ user, open, onClose, onSave }: Props) {
                   placeholder="Nueva contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  maxLength={50}
                 />
                 <button
                   type="button"

@@ -27,7 +27,15 @@ export function RfidScannerModal({ open, onClose }: RfidScannerModalProps) {
   }, [open]);
 
   const handleSubmit = async () => {
-    if (!code.trim()) return;
+    if (!code.trim()) {
+      toast.error("El campo está vacío.");
+      return;
+    }
+
+    if (!/^\d+$/.test(code)) {
+      toast.error("El código RFID solo debe contener números.");
+      return;
+    }
 
     setLoading(true);
     setSuccess(false);
@@ -53,7 +61,7 @@ export function RfidScannerModal({ open, onClose }: RfidScannerModalProps) {
       const errorMessage =
         err instanceof Error ? err.message : "No se pudo registrar";
       if (errorMessage.includes("una entrada diaria")) {
-        setRestrictionOpen(true); // abre el diálogo especial
+        setRestrictionOpen(true);
       } else {
         toast.error(errorMessage);
       }
@@ -79,7 +87,10 @@ export function RfidScannerModal({ open, onClose }: RfidScannerModalProps) {
           <Input
             ref={inputRef}
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) => {
+              const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+              setCode(onlyNumbers);
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Escanea la tarjeta..."
             disabled={loading || success}

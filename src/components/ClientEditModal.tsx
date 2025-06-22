@@ -61,6 +61,36 @@ export function ClientEditModal({ client, open, onClose, onSave }: Props) {
 
   const handleSubmit = async () => {
     setLoading(true);
+
+    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
+    if (!nameRegex.test(form.name)) {
+      toast.error("Nombre inválido. Solo letras y mínimo 2 caracteres.");
+      setLoading(false);
+      return;
+    }
+    if (!nameRegex.test(form.lastname)) {
+      toast.error("Apellido inválido. Solo letras y mínimo 2 caracteres.");
+      setLoading(false);
+      return;
+    }
+    if (!emailRegex.test(form.email)) {
+      toast.error("Correo electrónico no válido.");
+      setLoading(false);
+      return;
+    }
+    if (form.ci.length < 5 || form.ci.length > 10) {
+      toast.error("Carnet de identidad debe tener entre 5 y 10 caracteres.");
+      setLoading(false);
+      return;
+    }
+    if (password && !passwordRegex.test(password)) {
+      toast.error("La contraseña debe tener al menos 8 caracteres, letras y números.");
+      setLoading(false);
+      return;
+    }
     try {
       const body = {
         name: form.name,
@@ -120,24 +150,28 @@ export function ClientEditModal({ client, open, onClose, onSave }: Props) {
             value={form.name}
             onChange={handleChange}
             placeholder="Nombre"
+            maxLength={25}
           />
           <Input
             name="lastname"
             value={form.lastname}
             onChange={handleChange}
             placeholder="Apellido"
+            maxLength={25}
           />
           <Input
             name="email"
             value={form.email}
             onChange={handleChange}
             placeholder="Correo"
+            maxLength={35}
           />
           <Input
             name="ci"
             value={form.ci}
             onChange={handleChange}
             placeholder="Carnet"
+            maxLength={10}
           />
           <Input
             name="birthdate"

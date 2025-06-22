@@ -13,8 +13,33 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const validateLoginForm = () => {
+  if (!email.trim() || !password.trim()) {
+    setError("Todos los campos son obligatorios");
+    return false;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setError("Correo electrónico no válido");
+    return false;
+  }
+/*
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    setError("La contraseña debe tener al menos 8 caracteres e incluir letras y números");
+    return false;
+  }
+    */
+
+  return true;
+};
+
   const handleLogin = async () => {
     setError("");
+
+    if (!validateLoginForm()) return;
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: "POST",
@@ -59,6 +84,7 @@ export default function LoginPage() {
           placeholder="Correo electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          maxLength={35}
           className="mb-3"
         />
 

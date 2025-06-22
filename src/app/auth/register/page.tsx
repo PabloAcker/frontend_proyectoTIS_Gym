@@ -31,8 +31,34 @@ export default function RegisterPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validateRegisterForm = () => {
+  const { name, lastname, email, password, ci } = form;
+
+  if (!name || !lastname || !email || !password || !ci) {
+    setError("Todos los campos son obligatorios");
+    return false;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setError("Correo electrónico no válido");
+    return false;
+  }
+
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    setError("La contraseña debe tener al menos 8 caracteres e incluir letras y números");
+    return false;
+  }
+
+  return true;
+};
+
   const handleSubmit = async () => {
     setError("");
+
+    if (!validateRegisterForm()) return;
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients`, {
         method: "POST",
@@ -71,6 +97,7 @@ export default function RegisterPage() {
           placeholder="Nombre"
           value={form.name}
           onChange={handleChange}
+          maxLength={25}
           className="mb-3"
         />
         <Input
@@ -78,6 +105,7 @@ export default function RegisterPage() {
           placeholder="Apellido"
           value={form.lastname}
           onChange={handleChange}
+          maxLength={25}
           className="mb-3"
         />
         <Input
@@ -85,6 +113,7 @@ export default function RegisterPage() {
           placeholder="CI"
           value={form.ci}
           onChange={handleChange}
+          maxLength={10}
           className="mb-3"
         />
         <Input
@@ -100,6 +129,7 @@ export default function RegisterPage() {
           placeholder="Correo electrónico"
           value={form.email}
           onChange={handleChange}
+          maxLength={35}
           className="mb-3"
         />
         <div className="relative mb-4">

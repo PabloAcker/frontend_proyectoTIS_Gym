@@ -115,7 +115,12 @@ export default function AdminRFIDLogsPage() {
           <Input
             placeholder="Buscar por nombre, apellido o CI"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+            const value = e.target.value;
+            if (/^[\w@\.\s\-áéíóúÁÉÍÓÚñÑ]*$/.test(value) && value.length <= 50) {
+              setSearch(value);
+            }
+          }}
             className="max-w-md"
           />
 

@@ -66,7 +66,12 @@ export default function AdminMembershipsPage() {
           type="text"
           placeholder="Filtrar por nombre, duración o descripción"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^[\w@\.\s\-áéíóúÁÉÍÓÚñÑ]*$/.test(value) && value.length <= 50) {
+              setSearch(value);
+            }
+          }}
           className="max-w-md"
         />
 

@@ -62,6 +62,30 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
   const handleSubmit = async () => {
     if (!form) return;
     setLoading(true);
+    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
+    if (!nameRegex.test(form.name)) {
+      toast.error("Nombre inválido. Solo letras y mínimo 2 caracteres.");
+      setLoading(false);
+      return;
+    }
+    if (!nameRegex.test(form.lastname)) {
+      toast.error("Apellido inválido. Solo letras y mínimo 2 caracteres.");
+      setLoading(false);
+      return;
+    }
+    if (!emailRegex.test(form.email)) {
+      toast.error("Correo electrónico no válido.");
+      setLoading(false);
+      return;
+    }
+    if (password && !passwordRegex.test(password)) {
+      toast.error("La contraseña debe tener al menos 8 caracteres, letras y números.");
+      setLoading(false);
+      return;
+    }
     try {
       const payload = {
         name: form.name,
@@ -109,6 +133,7 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
               value={form.name}
               onChange={handleChange}
               className="mb-2"
+              maxLength={25}
             />
             <Input
               name="lastname"
@@ -116,6 +141,7 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
               value={form.lastname}
               onChange={handleChange}
               className="mb-2"
+              maxLength={25}
             />
             <Input
               name="email"
@@ -123,6 +149,7 @@ export function EmployeeEditModal({ employee, open, onClose, onSave }: Props) {
               value={form.email}
               onChange={handleChange}
               className="mb-4"
+              maxLength={35}
             />
 
             <Select value={form.role} onValueChange={handleRoleChange}>

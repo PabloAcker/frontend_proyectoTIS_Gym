@@ -116,7 +116,12 @@ export default function AdminBranchesPage() {
           type="text"
           placeholder="Filtrar por nombre o dirección"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^[\w@\.\s\-áéíóúÁÉÍÓÚñÑ]*$/.test(value) && value.length <= 50) {
+              setSearch(value);
+            }
+          }}
           className="max-w-md"
         />
 

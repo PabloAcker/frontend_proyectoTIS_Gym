@@ -72,6 +72,27 @@ export default function ClientProfilePage() {
   }, [user]);
 
   const handleUpdate = async (field: EditableField) => {
+    const value = form[field].trim();
+
+    if (field === "name" || field === "lastname") {
+      if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value)) {
+        toast.error("Solo se permiten letras en el nombre y apellido");
+        return;
+      }
+      if (value.length < 2) {
+        toast.error("El campo debe tener al menos 2 caracteres");
+        return;
+      }
+    }
+
+    if (field === "password") {
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(value)) {
+        toast.error("La contraseña debe tener al menos 8 caracteres, letras y números");
+        return;
+      }
+    }
+
     try {
       const endpoint = clientId
         ? `${process.env.NEXT_PUBLIC_API_URL}/clients/${clientId}`
@@ -80,7 +101,7 @@ export default function ClientProfilePage() {
       const res = await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: form[field] }),
+        body: JSON.stringify({ [field]: value }),
       });
 
       if (!res.ok) {
@@ -162,6 +183,7 @@ export default function ClientProfilePage() {
                 onChange={handleChange}
                 disabled={editingField !== key}
                 className="flex-1"
+                maxLength={25}
               />
               {editingField === key ? (
                 <div className="flex gap-2">

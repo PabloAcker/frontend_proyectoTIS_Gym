@@ -144,7 +144,11 @@ export default function AdminProfilePage() {
             <Input
               name={key}
               value={form[key as EditableField]}
-              onChange={handleChange}
+              onChange={(e) => {
+                if (e.target.value.length <= 25) {
+                  handleChange(e);
+                }
+              }}
               disabled={editingField !== key}
               className="flex-1"
             />
@@ -188,7 +192,11 @@ export default function AdminProfilePage() {
               name="password"
               type={showPassword ? "text" : "password"}
               value={form.password}
-              onChange={handleChange}
+              onChange={(e) => {
+                if (e.target.value.length <= 30) {
+                  handleChange(e);
+                }
+              }}
               disabled={editingField !== "password"}
               placeholder="••••••••"
             />

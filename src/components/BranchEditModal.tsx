@@ -107,12 +107,12 @@ export function BranchEditModal({ branch, open, onClose, onSave }: Props) {
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label>Nombre</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Input value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
           </div>
 
           <div className="space-y-2">
             <Label>Dirección</Label>
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+            <Input value={address} maxLength={50} onChange={(e) => setAddress(e.target.value)} />
           </div>
 
           <div className="space-y-2">
@@ -121,6 +121,7 @@ export function BranchEditModal({ branch, open, onClose, onSave }: Props) {
               rows={3}
               placeholder="Ej: Cardio, Crossfit, Yoga"
               value={services}
+              maxLength={100}
               onChange={(e) => setServices(e.target.value)}
             />
           </div>

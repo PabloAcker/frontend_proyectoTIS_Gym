@@ -36,6 +36,28 @@ export function MembershipCreateModal({ open, onClose, onSave }: Props) {
   };
 
   const handleSubmit = async () => {
+    const { name, description, duration, price } = form;
+
+    if (!name.trim() || !description.trim() || !duration.trim() || price <= 0) {
+      toast.error("Todos los campos deben estar completos y válidos");
+      return;
+    }
+
+    if (name.length > 25) {
+      toast.error("El nombre no puede tener más de 25 caracteres");
+      return;
+    }
+
+    if (description.length > 120) {
+      toast.error("La descripción no puede tener más de 120 caracteres");
+      return;
+    }
+
+    if (duration.length > 25) {
+      toast.error("La duración no puede tener más de 25 caracteres");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/memberships`, {
@@ -49,7 +71,7 @@ export function MembershipCreateModal({ open, onClose, onSave }: Props) {
 
       onSave();
       onClose();
-      setForm({ name: "", description: "", duration: "", price: 0 }); // reset
+      setForm({ name: "", description: "", duration: "", price: 0 });
     } catch (err) {
       console.error(err);
       toast.error("Error al crear membresía");
@@ -74,6 +96,7 @@ export function MembershipCreateModal({ open, onClose, onSave }: Props) {
             value={form.name}
             onChange={handleChange}
             required
+            maxLength={25}
           />
           <Textarea
             name="description"
@@ -81,6 +104,7 @@ export function MembershipCreateModal({ open, onClose, onSave }: Props) {
             value={form.description}
             onChange={handleChange}
             required
+            maxLength={120}
           />
           <Input
             name="duration"
@@ -88,6 +112,7 @@ export function MembershipCreateModal({ open, onClose, onSave }: Props) {
             value={form.duration}
             onChange={handleChange}
             required
+            maxLength={10}
           />
           <Input
             name="price"

@@ -40,6 +40,28 @@ export function UserCreateModal({ open, onClose, onSave }: Props) {
     }
 
     setLoading(true);
+
+    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
+    if (!nameRegex.test(form.name)) {
+      toast.error("Nombre inválido. Solo letras y mínimo 2 caracteres.");
+      return;
+    }
+    if (!nameRegex.test(form.lastname)) {
+      toast.error("Apellido inválido. Solo letras y mínimo 2 caracteres.");
+      return;
+    }
+    if (!emailRegex.test(form.email)) {
+      toast.error("Correo electrónico no válido.");
+      return;
+    }
+    if (!passwordRegex.test(form.password)) {
+      toast.error("La contraseña debe tener al menos 8 caracteres, letras y números.");
+      return;
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
         method: "POST",
@@ -73,12 +95,14 @@ export function UserCreateModal({ open, onClose, onSave }: Props) {
             value={form.name}
             onChange={handleChange}
             placeholder="Nombre"
+            maxLength={25}
           />
           <Input
             name="lastname"
             value={form.lastname}
             onChange={handleChange}
             placeholder="Apellido"
+            maxLength={25}
           />
           <Input
             name="email"
@@ -92,6 +116,7 @@ export function UserCreateModal({ open, onClose, onSave }: Props) {
             value={form.password}
             onChange={handleChange}
             placeholder="Contraseña"
+            maxLength={50}
           />
 
           <Select

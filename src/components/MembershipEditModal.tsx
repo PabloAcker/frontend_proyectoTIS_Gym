@@ -41,6 +41,28 @@ export function MembershipEditModal({
 
   const handleSubmit = async () => {
     if (!form) return;
+    const { name, description, duration, price } = form;
+
+    if (!name.trim() || !description.trim() || !duration.trim() || Number(price) <= 0) {
+      toast.error("Todos los campos deben estar completos y válidos");
+      return;
+    }
+
+    if (name.length > 25) {
+      toast.error("El nombre no puede tener más de 25 caracteres");
+      return;
+    }
+
+    if (description.length > 120) {
+      toast.error("La descripción no puede tener más de 120 caracteres");
+      return;
+    }
+
+    if (duration.length > 25) {
+      toast.error("La duración no puede tener más de 25 caracteres");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -50,10 +72,10 @@ export function MembershipEditModal({
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: form.name,
-            description: form.description,
-            duration: form.duration,
-            price: Number(form.price),
+            name,
+            description,
+            duration,
+            price: Number(price),
           }),
         }
       );
@@ -110,18 +132,21 @@ export function MembershipEditModal({
             value={form.name}
             onChange={handleChange}
             placeholder="Nombre"
+            maxLength={25}
           />
           <Input
             name="description"
             value={form.description}
             onChange={handleChange}
             placeholder="Descripción"
+            maxLength={120}
           />
           <Input
             name="duration"
             value={form.duration}
             onChange={handleChange}
             placeholder="Duración (ej. 3 meses)"
+            maxLength={10}
           />
           <Input
             name="price"

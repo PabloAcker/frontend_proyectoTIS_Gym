@@ -86,7 +86,12 @@ export default function AdminClientsPage() {
           type="text"
           placeholder="Filtrar por nombre, apellido o correo"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^[\w@\.\s\-áéíóúÁÉÍÓÚñÑ]*$/.test(value) && value.length <= 50) {
+              setSearch(value);
+            }
+          }}
           className="max-w-md"
         />
 
