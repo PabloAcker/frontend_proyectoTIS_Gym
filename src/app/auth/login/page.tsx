@@ -24,13 +24,12 @@ export default function LoginPage() {
     setError("Correo electrónico no válido");
     return false;
   }
-/*
+
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
   if (!passwordRegex.test(password)) {
     setError("La contraseña debe tener al menos 8 caracteres e incluir letras y números");
     return false;
   }
-    */
 
   return true;
 };

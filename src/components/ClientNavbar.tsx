@@ -67,6 +67,14 @@ export function ClientNavbar() {
     setIsMounted(true);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user) fetchNotifications(user.id);
+    }, 60000); // cada 60 segundos
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const fetchNotifications = async (userId: number) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${userId}`);
@@ -76,8 +84,11 @@ export function ClientNavbar() {
         const messages = data.map((item) => item.message);
         setNotifications(messages);
 
-        const seen = Cookies.get("notifications_seen");
-        if (messages.length > 0 && !seen) {
+        const lastSeen = Cookies.get("notifications_last_seen");
+        const current = JSON.stringify(messages);
+
+        // Si no hay cookie previa o cambió el contenido => hay nuevas notificaciones
+        if (messages.length > 0 && current !== lastSeen) {
           setHasNewNotifications(true);
         } else {
           setHasNewNotifications(false);
@@ -102,7 +113,7 @@ export function ClientNavbar() {
   };
 
   const handleNotificationOpen = () => {
-    Cookies.set("notifications_seen", "true", { expires: 7 });
+    Cookies.set("notifications_last_seen", JSON.stringify(notifications), { expires: 7 });
     setHasNewNotifications(false);
   };
 
