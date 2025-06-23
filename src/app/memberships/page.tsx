@@ -13,12 +13,20 @@ interface Membership {
   duration: string;
 }
 
+interface Subscription {
+  id: number;
+  membership_id: number;
+  final_price?: number;
+}
+
 export default function MembershipsPage() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [isLoadingMemberships, setIsLoadingMemberships] = useState(true);
   const [error, setError] = useState("");
 
   const [notifications, setNotifications] = useState([]);
+
+  const [latestSubscription, setLatestSubscription] = useState<Subscription | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,14 +47,29 @@ export default function MembershipsPage() {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return;
+
     const user = JSON.parse(storedUser);
 
+    // Notificaciones
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${user.id}`)
       .then((res) => res.json())
       .then((data) => setNotifications(data))
       .catch((err) => {
         console.error("Error al cargar notificaciones:", err);
         setNotifications([]);
+      });
+
+    // Última suscripción
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/latest/${user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data === "object" && "membership_id" in data) {
+          setLatestSubscription(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error al cargar última suscripción:", err);
+        setLatestSubscription(null);
       });
   }, []);
 
@@ -68,6 +91,7 @@ export default function MembershipsPage() {
               key={m.id}
               membership={m}
               notifications={notifications}
+              latestSubscription={latestSubscription}
             />
           ))}
         </div>

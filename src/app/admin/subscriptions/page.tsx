@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, X, BadgePlus } from "lucide-react";
+import { Check, X, BadgePlus, Gift } from "lucide-react";
 import { UnauthorizedDialog } from "@/components/UnauthorizedDialog";
 import { toast } from "sonner";
 import { Pagination } from "@/components/Pagination";
@@ -33,11 +33,11 @@ interface Subscription {
   start_date: string;
   end_date: string;
   proof_file: string | null;
+  final_price?: number;
   membership: {
     name: string;
     duration: string;
     price: number;
-    price_before_discount?: number;
   };
   user: {
     name: string;
@@ -216,13 +216,13 @@ const handleRFIDRegister = async () => {
                 <td className="p-2 border">{s.membership.name}</td>
                 <td className="p-2 border">{s.membership.duration}</td>
                 <td className="p-2 border">
-                  {s.membership.price_before_discount && s.membership.price_before_discount > s.membership.price ? (
+                  {s.final_price && s.final_price < s.membership.price ? (
                     <>
                       <span className="line-through text-muted-foreground mr-1">
-                        Bs. {s.membership.price_before_discount}
+                        Bs. {s.membership.price}
                       </span>
-                      <span className="text-green-600 font-semibold">Bs. {s.membership.price}</span>
-                      <span className="ml-1" title="Precio con descuento">🎁</span>
+                      <span className="text-primary font-semibold">Bs. {s.final_price}</span>
+                      <Gift className="inline-block w-4 h-4 text-primary ml-1" aria-label="Precio con descuento" />
                     </>
                   ) : (
                     <>Bs. {s.membership.price}</>

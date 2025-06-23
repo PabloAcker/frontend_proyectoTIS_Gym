@@ -68,6 +68,7 @@ export default function MembershipStatusPayPage() {
             userId: user.id,
             membershipId: selectedPlan.id,
             proofFile: base64,
+            finalPrice: selectedPlan.price, 
           }),
         });
 

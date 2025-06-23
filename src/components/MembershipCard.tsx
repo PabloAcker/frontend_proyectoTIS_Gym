@@ -13,6 +13,11 @@ interface Membership {
   price: number;
 }
 
+interface Subscription {
+  membership_id: number;
+  final_price?: number;
+}
+
 interface Notification {
   type: "mensual" | "trimestral" | "anual";
   discount: number;
@@ -22,10 +27,12 @@ interface Notification {
 export const MembershipCard = ({
   membership,
   notifications = [],
+  latestSubscription,
 }: {
   membership: Membership;
   notifications?: Notification[];
   hideDescription?: boolean;
+  latestSubscription?: Subscription | null;
 }) => {
   const getImagePath = (name: string) => {
     const key = name.toLowerCase();
@@ -53,6 +60,12 @@ export const MembershipCard = ({
     ? membership.price * (1 - discountNotification.discount / 100)
     : null;
 
+  const alreadyUsedDiscount =
+    latestSubscription &&
+    latestSubscription.membership_id === membership.id &&
+    typeof latestSubscription.final_price === "number" &&
+    latestSubscription.final_price < membership.price;
+
   return (
     <div className="bg-card p-4 rounded-xl shadow-md border border-border">
       <div className="flex flex-col gap-3">
@@ -66,9 +79,15 @@ export const MembershipCard = ({
         <h3 className="text-xl font-bold text-foreground">{membership.name}</h3>
 
         <div className="text-sm text-foreground">
-          {discountNotification ? (
+          {alreadyUsedDiscount ? (
+            // El descuento ya se usó, mostrar solo el precio normal
+            <p>
+              <strong>Precio:</strong> Bs. {membership.price.toFixed(2)}
+            </p>
+          ) : discountNotification ? (
+            // Tiene descuento disponible (y no se usó antes)
             <p className="text-sm flex items-center gap-2">
-              <strong>Precio: </strong>
+              <strong>Precio:</strong>
               <span className="line-through text-muted-foreground">
                 Bs. {membership.price.toFixed(2)}
               </span>
@@ -80,6 +99,7 @@ export const MembershipCard = ({
               </span>
             </p>
           ) : (
+            // No hay descuento ni se usó antes
             <p>
               <strong>Precio:</strong> Bs. {membership.price.toFixed(2)}
             </p>

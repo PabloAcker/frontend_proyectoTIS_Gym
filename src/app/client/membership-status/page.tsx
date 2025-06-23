@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { RotateCcw, PackageOpen } from "lucide-react";
+import { RotateCcw, PackageOpen, Gift } from "lucide-react";
 
 interface Membership {
   id: number;
@@ -21,6 +21,7 @@ interface Subscription {
   state: string;
   start_date: string;
   end_date: string;
+  final_price?: number;
   membership: Membership;
 }
 
@@ -118,18 +119,20 @@ export default function MembershipStatusPage() {
             <div className="mt-3">
               <h3 className="font-medium">{latest.membership.name}</h3>
               <p><strong>Duración:</strong> {latest.membership.duration}</p>
-              {latest.membership.price_before_discount && latest.membership.price_before_discount > latest.membership.price ? (
-                <p>
-                  <strong>Precio:</strong>{" "}
-                  <span className="line-through text-muted-foreground mr-2">
-                    Bs. {latest.membership.price_before_discount}
-                  </span>
-                  <span className="text-primary font-semibold">Bs. {latest.membership.price}</span>
-                  <span className="ml-2 text-green-500" title="¡Descuento activo!">🎁</span>
-                </p>
-              ) : (
-                <p><strong>Precio:</strong> Bs. {latest.membership.price}</p>
-              )}
+              {latest.final_price && latest.final_price < latest.membership.price ? (
+              <p>
+                <strong>Precio:</strong>{" "}
+                <span className="line-through text-muted-foreground mr-2">
+                  Bs. {latest.membership.price}
+                </span>
+                <span className="text-primary font-semibold">Bs. {latest.final_price}</span>
+                <span className="ml-2 text-primary" title="¡Descuento aplicado!">
+                  <Gift className="inline-block w-4 h-4 text-primary ml-1" aria-label="¡Descuento aplicado!" />
+                </span>
+              </p>
+            ) : (
+              <p><strong>Precio:</strong> Bs. {latest.membership.price}</p>
+            )}
             </div>
 
             {/* Botones dinámicos */}
@@ -189,14 +192,16 @@ export default function MembershipStatusPage() {
               <div className="bg-card border rounded-lg p-4 mt-2">
                 <h2 className="font-semibold mb-2">{sub.membership.name}</h2>
                 <p><strong>Duración:</strong> {sub.membership.duration}</p>
-                {sub.membership.price_before_discount && sub.membership.price_before_discount > sub.membership.price ? (
+                {sub.final_price && sub.final_price < sub.membership.price ? (
                   <p>
                     <strong>Precio:</strong>{" "}
                     <span className="line-through text-muted-foreground mr-2">
-                      Bs. {sub.membership.price_before_discount}
+                      Bs. {sub.membership.price}
                     </span>
-                    <span className="text-primary font-semibold">Bs. {sub.membership.price}</span>
-                    <span className="ml-2 text-green-500" title="¡Descuento activo!">🎁</span>
+                    <span className="text-primary font-semibold">Bs. {sub.final_price}</span>
+                    <span className="ml-2 text-primary" title="¡Descuento aplicado!">
+                      <Gift className="inline-block w-4 h-4 text-primary ml-1" aria-label="¡Descuento aplicado!" />
+                    </span>
                   </p>
                 ) : (
                   <p><strong>Precio:</strong> Bs. {sub.membership.price}</p>

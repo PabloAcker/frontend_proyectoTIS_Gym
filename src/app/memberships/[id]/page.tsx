@@ -17,6 +17,17 @@ interface Membership {
   discounted_price?: number;
 }
 
+interface Notification {
+  id: number;
+  type: "mensual" | "trimestral" | "anual";
+  discount: number;
+}
+
+interface Subscription {
+  membership_id: number;
+  final_price: number | null;
+}
+
 export default function MembershipDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -25,8 +36,31 @@ export default function MembershipDetailPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [showAlreadySubscribedDialog, setShowAlreadySubscribedDialog] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [latestSubscription, setLatestSubscription] = useState<Subscription | null>(null);
 
   useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user?.id;
+
+    if (userId) {
+      // Notificaciones activas
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${userId}`)
+        .then(res => res.json())
+        .then(data => setNotifications(data))
+        .catch(err => console.error("Error al obtener notificaciones", err));
+
+      // Última suscripción
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/latest/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data === "object") {
+            setLatestSubscription(data);
+          }
+        })
+        .catch(err => console.error("Error al obtener última suscripción", err));
+    }
+
     const fetchMembership = async () => {
       try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -88,8 +122,9 @@ export default function MembershipDetailPage() {
         name: membership.name,
         description: membership.description,
         duration: membership.duration,
-        price: membership.discounted_price ?? membership.price,
-        price_before_discount: membership.discounted_price ? membership.price : undefined,
+        price: discountedPrice ?? membership.discounted_price ?? membership.price,
+        price_before_discount:
+          discountedPrice || membership.discounted_price ? membership.price : undefined,
       };
 
       localStorage.setItem("selectedMembership", JSON.stringify(selected));
@@ -115,6 +150,31 @@ export default function MembershipDetailPage() {
   const isQuarterly = name.includes("trimestral");
   const isAnnual = name.includes("anual");
 
+  const getPlanType = (name: string): "mensual" | "trimestral" | "anual" | null => {
+    const n = name.toLowerCase();
+    if (n.includes("mensual")) return "mensual";
+    if (n.includes("trimestral")) return "trimestral";
+    if (n.includes("anual")) return "anual";
+    return null;
+  };
+
+  const planType = getPlanType(membership.name);
+
+  // Buscar si hay una notificación activa para este tipo de plan
+  const discountNotification = notifications.find((n) => n.type === planType);
+
+  // Verificamos si ya tuvo descuento en la última suscripción para este plan
+  const alreadyDiscounted =
+    latestSubscription &&
+    latestSubscription.membership_id === membership.id &&
+    latestSubscription.final_price !== null &&
+    latestSubscription.final_price < membership.price;
+
+  // Precio calculado fuera del handler
+  const discountedPrice =
+    discountNotification && !alreadyDiscounted
+      ? membership.price * (1 - discountNotification.discount / 100)
+      : null;
 
   return (
     <main className="p-6 max-w-2xl mx-auto bg-background text-foreground">
@@ -197,31 +257,21 @@ export default function MembershipDetailPage() {
       </p>
       <div className="mb-6 text-sm">
         <strong>Precio:</strong>{" "}
-        {(() => {
-          const hasDiscount =
-            typeof membership.discounted_price === "number" &&
-            membership.discounted_price < membership.price;
-
-          if (hasDiscount) {
-            return (
-              <span className="flex items-center gap-2">
-                <span className="line-through text-muted-foreground">
-                  Bs. {membership.price.toFixed(2)}
-                </span>
-                <span className="text-primary font-semibold flex items-center gap-1">
-                  Bs. {(membership.discounted_price ?? membership.price).toFixed(2)}
-                  <Gift className="w-4 h-4 text-primary" aria-label="Precio con descuento" />
-                </span>
-              </span>
-            );
-          }
-
-          return (
-            <span className="text-primary font-semibold">
+        {discountedPrice ? (
+          <span className="flex items-center gap-2">
+            <span className="line-through text-muted-foreground">
               Bs. {membership.price.toFixed(2)}
             </span>
-          );
-        })()}
+            <span className="text-primary font-semibold flex items-center gap-1">
+              Bs. {discountedPrice.toFixed(2)}
+              <Gift className="w-4 h-4 text-primary" aria-label="Precio con descuento" />
+            </span>
+          </span>
+        ) : (
+          <span className="text-primary font-semibold">
+            Bs. {membership.price.toFixed(2)}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
