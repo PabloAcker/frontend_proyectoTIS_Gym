@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -14,8 +15,16 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
-import { BranchImageZoomModal } from "@/components/BranchImageZoomModal"; // ✅ NUEVO
+import { Building2, MapPinHouse } from "lucide-react";
+import { BranchImageZoomModal } from "@/components/BranchImageZoomModal";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // 👇 Define la interfaz Branch
 interface Branch {
@@ -42,10 +51,71 @@ export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
 
+  const [nearestBranchId, setNearestBranchId] = useState<number | null>(null);
+  const [geoModalOpen, setGeoModalOpen] = useState(false);
+
   // ✅ Estados para el modal de imagen ampliada
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState("");
   const [modalBranch, setModalBranch] = useState("");
+
+  const handleGeolocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Tu navegador no soporta geolocalización.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        if (branches.length === 0) {
+          toast.error("No hay sucursales disponibles para comparar.");
+          return;
+        }
+
+        let minDistance = Infinity;
+        let closestBranchId: number | null = null;
+
+        branches.forEach((branch) => {
+          const d = getDistance(latitude, longitude, branch.coordinates.lat, branch.coordinates.lng);
+          if (d < minDistance) {
+            minDistance = d;
+            closestBranchId = branch.id;
+          }
+        });
+
+        if (closestBranchId !== null) {
+          setSelectedBranchId(closestBranchId);
+          setNearestBranchId(closestBranchId);
+          const selected = branches.find((b) => b.id === closestBranchId);
+          toast.success(`Sucursal más cercana: ${selected?.name}`);
+        }
+      },
+      () => {
+        toast.error("Permiso de ubicación denegado. Actívalo para usar esta función.");
+      }
+    );
+  };
+
+  // Haversine formula para calcular distancia entre coordenadas
+  function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371; // km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(deg2rad(lat1)) *
+        Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function deg2rad(deg: number) {
+    return deg * (Math.PI / 180);
+  }
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -80,6 +150,29 @@ export default function BranchesPage() {
 
   return (
     <main className="flex flex-col sm:flex-row min-h-screen bg-background text-foreground p-6 gap-6">
+        <Dialog open={geoModalOpen} onOpenChange={setGeoModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Permiso de geolocalización</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Para mostrarle la ubicación de la sucursal más cercana debe aceptar dar permisos de su ubicación.
+            </p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setGeoModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  setGeoModalOpen(false);
+                  handleGeolocation(); // llama a la función que ya tienes
+                }}
+              >
+                Aceptar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       <ClientSidebar />
 
       <div className="flex-1 flex flex-col lg:flex-row gap-6">
@@ -90,22 +183,31 @@ export default function BranchesPage() {
           </p>
 
           {/* Selector basado en nombre de sucursal */}
-          <div className="mb-4 max-w-xs">
-            <Select
-              value={selectedBranchId?.toString()}
-              onValueChange={(val) => setSelectedBranchId(parseInt(val))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona una sucursal" />
-              </SelectTrigger>
-              <SelectContent>
-                {branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id.toString()}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mb-4 flex flex-wrap sm:flex-nowrap items-center gap-2">
+            <div className="max-w-xs w-full">
+              <Select
+                value={selectedBranchId?.toString()}
+                onValueChange={(val) => setSelectedBranchId(parseInt(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una sucursal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id.toString()}>
+                      <span className={nearestBranchId === b.id ? "text-primary font-semibold" : ""}>
+                        {b.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button variant="outline" onClick={() => setGeoModalOpen(true)}>
+              <MapPinHouse className="w-4 h-4 mr-2" />
+              Geolocalización
+            </Button>
           </div>
 
           {/* Mapa */}

@@ -54,6 +54,11 @@ export default function AdminRFIDLogsPage() {
         console.error("Respuesta inesperada:", data);
         return;
       }
+      data.sort((a, b) => {
+        const dateA = a.entry_date ? new Date(a.entry_date).getTime() : 0;
+        const dateB = b.entry_date ? new Date(b.entry_date).getTime() : 0;
+        return dateB - dateA;
+      });
       setLogs(data);
       setFiltered(data);
     } catch (error) {

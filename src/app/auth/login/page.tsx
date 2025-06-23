@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [cooldown, setCooldown] = useState(0); // en segundos
 
   const validateLoginForm = () => {
   if (!email.trim() || !password.trim()) {
@@ -67,8 +70,60 @@ export default function LoginPage() {
       } else {
         setError("Error al iniciar sesión");
       }
+
+      // 👇 Lógica de intento fallido
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+
+      if (newAttempts >= 3) {
+        const lockUntil = Date.now() + 30000;
+        localStorage.setItem("loginCooldown", lockUntil.toString());
+        setLoginAttempts(0);
+
+        const secondsRemaining = Math.ceil((lockUntil - Date.now()) / 1000);
+        setCooldown(secondsRemaining);
+
+        toast.warning("Demasiados intentos fallidos. Espera 30 segundos para volver a intentar.", {
+          duration: 5000,
+        });
+
+        const interval = setInterval(() => {
+          const newRemaining = Math.ceil((lockUntil - Date.now()) / 1000);
+          if (newRemaining <= 0) {
+            clearInterval(interval);
+            localStorage.removeItem("loginCooldown");
+            setCooldown(0);
+          } else {
+            setCooldown(newRemaining);
+          }
+        }, 1000);
+      }
     }
   };
+
+  useEffect(() => {
+    const storedCooldown = parseInt(localStorage.getItem("loginCooldown") || "0");
+    const now = Date.now();
+
+    if (storedCooldown > now) {
+      const secondsRemaining = Math.ceil((storedCooldown - now) / 1000);
+      setCooldown(secondsRemaining);
+
+      const interval = setInterval(() => {
+        const newRemaining = Math.ceil((storedCooldown - Date.now()) / 1000);
+        if (newRemaining <= 0) {
+          clearInterval(interval);
+          localStorage.removeItem("loginCooldown");
+          setCooldown(0);
+          setLoginAttempts(0);
+        } else {
+          setCooldown(newRemaining);
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
@@ -122,8 +177,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Button className="w-full" onClick={handleLogin}>
-          Continuar
+        <Button
+          className="w-full"
+          onClick={handleLogin}
+          disabled={cooldown > 0}
+        >
+          {cooldown > 0 ? `Espera ${cooldown}s...` : "Continuar"}
         </Button>
 
         {error && (
